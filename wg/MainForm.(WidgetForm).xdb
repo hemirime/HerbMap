@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<WidgetForm>
+	<Name>HerbMap</Name>
+	<Priority>11250</Priority>
+	<Children>
+		<Item href="MiniMapPanel.(WidgetPanel).xdb#xpointer(/WidgetPanel)" /> 
+		<Item href="MainPanel.(WidgetPanel).xdb#xpointer(/WidgetPanel)" /> 
+		<Item href="ListPanel.(WidgetPanel).xdb#xpointer(/WidgetPanel)" /> 
+		<Item href="res/btn/btn.(WidgetButton).xdb#xpointer(/WidgetButton)" />
+		<Item href="res/Tooltip/Tooltip.(WidgetPanel).xdb#xpointer(/WidgetPanel)" />
+	</Children>
+	<BackLayer href="" />
+	<Placement>
+		<QuantumScale>false</QuantumScale>
+		<X>
+			<Align>WIDGET_ALIGN_BOTH</Align>
+		</X>
+		<Y>
+			<Align>WIDGET_ALIGN_BOTH</Align>
+		</Y>
+	</Placement>
+	<Visible>true</Visible>
+	<Enabled>true</Enabled>
+	<TransparentInput>false</TransparentInput>
+	<PickChildrenOnly>true</PickChildrenOnly>
+</WidgetForm>

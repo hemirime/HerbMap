@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<UITexture>
+	<mipSW>-1</mipSW>
+	<mipsNumber>1</mipsNumber>
+	<generateMipChain>false</generateMipChain>
+	<type>DXT1</type>
+	<width>64</width>
+	<height>64</height>
+	<realWidth>54</realWidth>
+	<realHeight>54</realHeight>
+	<disableLODControl>false</disableLODControl>
+	<alphaTex>true</alphaTex>
+	<binaryFileSize>763</binaryFileSize>
+	<binaryFile href="ObjectButtonHighlightTexture.(UITexture).bin" />
+	<wrap>false</wrap>
+</UITexture>

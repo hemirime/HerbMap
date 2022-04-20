@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<UIAddon>
+  <AutoStart>true</AutoStart>
+  <Forms>
+    <Item>
+      <Id>Main</Id>
+      <Form href="wg/MainForm.(WidgetForm).xdb#xpointer(/WidgetForm)"/>
+    </Item>
+  </Forms>
+  <MainFormId>Main</MainFormId>
+  <Name>HerbMap</Name>
+  <localizedNameFileRef href="name.txt"/>
+  <localizedDescFileRef href="desc.txt"/>
+  <ScriptFileRefs>
+    <Item href="/Mods/SampleCommon/SampleAddonBase.lua"/>
+    <Item href="script/ScriptLIB.lua"/>
+    <Item href="script/LibDnD.lua"/>
+    <Item href="config.txt"/>
+    <Item href="script/herb.lua"/>
+  </ScriptFileRefs>
+  <author>Jed(Zeon)</author>
+  <revision>1.2</revision>
+  <texts href=""/>
+  <textures href="wg/res/Icons.(UIRelatedTextures).xdb#xpointer(/UIRelatedTextures)"/>
+  <update>2013-08-21 00:12:00</update>
+  <visObjects href=""/>
+  <www>http://alloder.pro/files/file/176-herbmap/</www>
+<addon_name>HerbMap</addon_name><addon_date>1521843153</addon_date><addon_link>https://alloder.pro/files/file/176-herbmap/?do=download&amp;r=24252&amp;confirm=1&amp;t=1&amp;csrfKey=</addon_link></UIAddon>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<WidgetButton>
+  <Name>cbtn</Name>
+  <Priority>10</Priority>
+  <Placement>
+    <X>
+      <Size>24</Size>
+    </X>
+    <Y>
+      <Size>24</Size>
+    </Y>
+  </Placement>
+  <IgnoreDblClick>true</IgnoreDblClick>
+  <Variants>
+    <Item>
+		<StateNormal>
+			<LayerMain href="CheckBoxStone.(WidgetLayerTiledTexture).xdb#xpointer(/WidgetLayerTiledTexture)" />
+		</StateNormal>
+		<StatePushed>
+			<LayerMain href="CheckBoxStoneChecked.(WidgetLayerTiledTexture).xdb#xpointer(/WidgetLayerTiledTexture)" />
+		</StatePushed>
+		<ReactionOnUp>true</ReactionOnUp>
+		<Reaction>click_cbtn</Reaction>
+    </Item>
+    <Item>
+		<StateNormal>
+			<LayerMain href="CheckBoxStoneChecked.(WidgetLayerTiledTexture).xdb#xpointer(/WidgetLayerTiledTexture)" />
+		</StateNormal>      
+		<ReactionOnUp>true</ReactionOnUp>
+		<Reaction>click_cbtn</Reaction>
+    </Item>
+  </Variants>
+  <Visible>false</Visible>
+</WidgetButton>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<WidgetTextView>
+	<Name>TooltipText</Name>
+	<Placement>
+		<X>
+			<Sizing>WIDGET_SIZING_INTERNAL</Sizing>
+			<Align>WIDGET_ALIGN_BOTH</Align>
+			<Pos>12</Pos>
+			<HighPos>12</HighPos>
+		</X>
+		<Y>
+			<Sizing>WIDGET_SIZING_INTERNAL</Sizing>
+			<Align>WIDGET_ALIGN_BOTH</Align>
+			<Pos>12</Pos>
+			<HighPos>12</HighPos>
+		</Y>
+	</Placement>
+	<TransparentInput>true</TransparentInput>
+	<FormatFileRef href="Text.txt" />
+	<TextStyle>
+		<multiline>true</multiline>
+		<wrapText>true</wrapText>
+	</TextStyle>
+	<minWidth>20</minWidth>
+	<maxWidth>300</maxWidth>
+</WidgetTextView>
