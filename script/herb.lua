@@ -1,3 +1,12 @@
+local isDebugEnabled = true
+
+function Log(message)
+  if not isDebugEnabled then return end
+
+  common.LogInfo(common.GetAddonName(), message)
+  LogToChat(message)
+end
+
 local wtMainPanel = mainForm:GetChildChecked("MainPanel", false)
 local wtMiniMapPanel = mainForm:GetChildChecked("MiniMapPanel", false)
 local MainMap = stateMainForm:GetChildChecked("Map", false):GetChildChecked("MainPanel", false)
@@ -106,7 +115,7 @@ end
 function SavePoints()
   if herb then
     userMods.SetGlobalConfigSection("HerbMap", herb)
-    --    LogToChat(GetTableSize(herb).." точек записано")
+    Log(GetTableSize(herb).." точек записано")
   end
 end
 
@@ -120,10 +129,10 @@ function Reaction(params)
     ------------------
     if string.find(userMods.FromWString(item.name), Type.HERB) then
       icons = "HERB"
-      --       LogToChat("Травка "..kol+1)
+      Log("Травка "..kol+1)
     elseif string.find(userMods.FromWString(item.name), Type.GORN) then
       icons = "GORN"
-      --        LogToChat("Руда "..kol+1)
+      Log("Руда "..kol+1)
     end
     ----
     if string.find(userMods.FromWString(item.name), Type.HERB) then
@@ -136,17 +145,17 @@ function Reaction(params)
     for i = 1, kol do
       if herb[i].MAP == zoneInfo and pos.posX > herb[i].posX - Radius and herb[i].posX + Radius > pos.posX and pos.posY > herb[i].posY - Radius and herb[i].posY + Radius > pos.posY then
         finds = false
-        --      LogToChat("Такая точка уже есть")
+        Log("Такая точка уже есть")
         break
       end
     end
     if icons == "" then
       finds = false
-      --      LogToChat("Не определен тип ресурса")
+      Log("Не определен тип ресурса")
     end
     if finds then
       kol = kol + 1
-      --      LogToChat("Точка записана"..kol)
+      Log("Точка записана"..kol)
       herb[kol] = {
         NAME = item.name,
         ICON = icons,
@@ -216,10 +225,8 @@ function OnPoint()
       if CurrentMap() == herb[i].MAP then
         if ShowMetki.HERB and herb[i].ICON == "HERB" then
           R = true
-          --          LogToChat("Травка")
         elseif ShowMetki.GORN and herb[i].ICON == "GORN" then
           R = true
-          --          LogToChat("Руда")
         else
           R = false
         end
@@ -258,10 +265,8 @@ function OnMiniPoint()
       if cartographer.GetZonesMapInfo(unit.GetZonesMapId(avatar.GetId())).sysName == herb[i].MAP then
         if ShowMetki.HERB and herb[i].ICON == "HERB" then
           R = true
-          --          LogToChat("Травка")
         elseif ShowMetki.GORN and herb[i].ICON == "GORN" then
           R = true
-          --          LogToChat("Руда")
         else
           R = false
         end
@@ -361,7 +366,7 @@ function CheckMiniSize()
     local pl = square:GetPlacementPlain()
     local Size = pl.sizeX .. "x" .. pl.sizeY
     local CollectCurMap = 1
-    --LogToChat("Square "..Size.." "..CollectCurMap)
+    Log("Square "..Size.." "..CollectCurMap)
     if CollectSize ~= Size or CollectMap ~= CollectCurMap then
       MiniMapPanel = square
       OnMiniMap()
@@ -373,7 +378,7 @@ function CheckMiniSize()
     local pl = circle:GetPlacementPlain()
     local Size = pl.sizeX .. "x" .. pl.sizeY
     local CollectCurMap = 2
-    --LogToChat("Circle "..Size.." "..CollectCurMap)
+    Log("Circle "..Size.." "..CollectCurMap)
     if CollectSize ~= Size or CollectMap ~= CollectCurMap then
       MiniMapPanel = circle
       OnMiniMap()
@@ -393,7 +398,7 @@ function ReactionBottom(param)
   if DnD:IsDragging() then return end
   local widgetName = param.widget:GetName()
   if widgetName == "sBtn1" then -- скрыть
-    --    LogToChat("Скрыть...")
+    Log("Скрыть...")
     if wtMainPanel:IsVisible() then
       wtMainPanel:Show(false)
       ShowMap = false
@@ -402,14 +407,14 @@ function ReactionBottom(param)
       ShowMap = true
     end
   elseif widgetName == "sBtn2" then -- Сброс точек на карте
-    --    LogToChat("Сброс точек на карте")
+    Log("Сброс точек на карте")
     -------------------------------------------
     -- сравнение названий карт
     local sizeKol = kol
     for i = 1, kol do
       if herb[i] then
         if CurrentMap() == herb[i].MAP then
-          --         LogToChat("Точки на данной карте найдены "..i.." всего точек "..kol)
+          Log("Точки на данной карте найдены "..i.." всего точек "..kol)
           for i = 1, kol do
             if wtPoint[i] then
               wtPoint[i]:DestroyWidget()
@@ -421,7 +426,7 @@ function ReactionBottom(param)
           herb[sizeKol] = nil
           sizeKol = sizeKol - 1
         else
-          --         LogToChat("Точки на данной карте не найдены всего их "..kol)
+          Log("Точки на данной карте не найдены всего их "..kol)
         end
       end
     end
