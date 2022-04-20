@@ -7,24 +7,37 @@ function Log(message)
   LogToChat(message)
 end
 
+function GetMiniMapWidget(parent, name)
+  return {
+    Name = name,
+    Engine = parent:GetChildChecked(name, false):GetChildChecked("Map", false):GetChildChecked("MapEngine", false)
+  }
+end
+
 local wtMainPanel = mainForm:GetChildChecked("MainPanel", false)
 local wtMiniMapPanel = mainForm:GetChildChecked("MiniMapPanel", false)
 local MainMap = stateMainForm:GetChildChecked("Map", false):GetChildChecked("MainPanel", false)
 local wtName = MainMap:GetChildChecked("LayoutMain", false):GetChildChecked("LayoutFrameLeft", false):GetChildChecked("LayoutFrameLeftHor", false):GetChildChecked("LayoutFrameLeftVert", false):GetChildChecked("MapEnginePanel", false):GetChildChecked("Markers", false):GetChildChecked("MapTextPanel", false)
 local wtBtn = mainForm:GetChildChecked("btn", false)
-local wtMiniMap = stateMainForm:GetChildChecked("Minimap", false)
-local square = wtMiniMap:GetChildChecked("Square", false):GetChildChecked("Map", false):GetChildChecked("MapEngine", false)
-local circle = wtMiniMap:GetChildChecked("Circle", false):GetChildChecked("Map", false):GetChildChecked("MapEngine", false)
+
+local MiniMap = stateMainForm:GetChildChecked("Minimap", false)
+local SquareMiniMap = GetMiniMapWidget(MiniMap, "Square")
+local CircleMiniMap = GetMiniMapWidget(MiniMap, "Circle")
+
+local miniMapInfo = {
+  Name = nil,
+  MapSize = nil,
+  Engine = nil,
+}
+
 local herb = {}
 local kol = 0
 local wtPoint = {}
 local wtPointMini = {}
 local ShowMap = true
 local geodata
-local MiniMapPanel
 local plMini
-local CollectSize
-local CollectMap = 0
+
 local vid = 0
 -- чекКнопки для отображения информации
 local wtListPanel = mainForm:GetChildChecked("listpanel", false)
@@ -38,6 +51,18 @@ sB:Show(false)
 local sBtn = {} -- просто кнопки
 local wtInfoPanel = mainForm:GetChildChecked("Tooltip", false)
 local wtInfoPaneltxt = wtInfoPanel:GetChildChecked("TooltipText", false)
+
+--------------------------------------------------------------------------------
+
+function GetActiveMiniMap()
+  if SquareMiniMap.Engine:IsVisibleEx() then
+    return SquareMiniMap
+  elseif CircleMiniMap.Engine:IsVisibleEx() then
+    return CircleMiniMap
+  else
+    return nil
+  end
+end
 
 function PosXY(wt, posX, sizeX, posY, sizeY, alignX, alignY)
   local Placement = wt:GetPlacementPlain()
@@ -165,8 +190,7 @@ function OnPoint()
   end
 end
 
-function OnMiniPoint()
-  MiniMapPanel:AddChild(wtMiniMapPanel)
+function RenderMiniMapPoints()
   local geodata = cartographer.GetObjectGeodata(avatar.GetId())
   plMini = wtMiniMapPanel:GetPlacementPlain()
   local R = false
@@ -237,7 +261,7 @@ function OnMap()
   end
 end
 
-function RefreshMinimapOverlay()
+function RefreshMiniMapOverlay()
   local markers = cartographer.GetMapMarkers(cartographer.GetCurrentZoneInfo().zonesMapId)
   for i, markerId in pairs(markers) do
     local markedobjects = cartographer.GetMapMarkerObjects(cartographer.GetCurrentZoneInfo().zonesMapId, markerId)
@@ -245,57 +269,38 @@ function RefreshMinimapOverlay()
       geodata = v.geodata
     end
   end
-  local lm
-  if square:IsVisibleEx() then
-    lm = square
-    MiniMapPanel = lm
-    wtMiniMapPanel:Show(true)
-  elseif circle:IsVisibleEx() then
-    lm = circle
-    MiniMapPanel = lm
-    wtMiniMapPanel:Show(true)
-  elseif not square:IsVisibleEx() and not circle:IsVisibleEx() then
+  --
+  local activeMiniMap = GetActiveMiniMap()
+  if not activeMiniMap then
     wtMiniMapPanel:Show(false)
     return
   end
-  local Placement = wtMiniMapPanel:GetPlacementPlain()
-  local pl = lm:GetPlacementPlain()
-  for i = 1, kol do
-    if herb[i] then
-      Placement.sizeX = pl.sizeX
-      Placement.sizeY = pl.sizeY
-      wtMiniMapPanel:SetPlacementPlain(Placement)
-      OnMiniPoint()
-    end
-  end
+
+  wtMiniMapPanel:Show(true)
+
+  local placement = activeMiniMap.Engine:GetPlacementPlain()
+  PosXY(wtMiniMapPanel, nil, placement.sizeX, nil, placement.sizeY)
+  activeMiniMap.Engine:AddChild(wtMiniMapPanel)
+
+  RenderMiniMapPoints()
 end
 
-function CheckMiniSize()
-  local lm
-  if square:IsVisibleEx() then
-    lm = square
-    local pl = square:GetPlacementPlain()
-    local Size = pl.sizeX .. "x" .. pl.sizeY
-    local CollectCurMap = 1
-    Log("Square "..Size.." "..CollectCurMap)
-    if CollectSize ~= Size or CollectMap ~= CollectCurMap then
-      MiniMapPanel = square
-      RefreshMinimapOverlay()
-      CollectSize = Size
-      CollectMap = CollectCurMap
-    end
-  elseif circle:IsVisibleEx() then
-    lm = circle
-    local pl = circle:GetPlacementPlain()
-    local Size = pl.sizeX .. "x" .. pl.sizeY
-    local CollectCurMap = 2
-    Log("Circle "..Size.." "..CollectCurMap)
-    if CollectSize ~= Size or CollectMap ~= CollectCurMap then
-      MiniMapPanel = circle
-      RefreshMinimapOverlay()
-      CollectSize = Size
-      CollectMap = CollectCurMap
-    end
+function CheckMiniMapScale()
+  local activeMiniMap = GetActiveMiniMap()
+  if not activeMiniMap then
+    return
+  end
+
+  local name = activeMiniMap.Name
+  local pl = activeMiniMap.Engine:GetPlacementPlain()
+  local mapSize = pl.sizeX .. "x" .. pl.sizeY
+
+  if name ~= miniMapInfo.Name or mapSize ~= miniMapInfo.MapSize then
+    Log("Изменился масштаб миникарты: " .. mapSize .. " и/или форма: " .. name)
+    miniMapInfo.Name = name
+    miniMapInfo.MapSize = mapSize
+    miniMapInfo.Engine = activeMiniMap.Engine
+    RefreshMiniMapOverlay()
   end
 end
 
@@ -347,13 +352,13 @@ end
 -- EVENT_SECOND_TIMER
 function OnTimer()
   OnMap()
-  CheckMiniSize()
+  CheckMiniMapScale()
   --  OnMiniMap()
 end
 
 -- EVENT_AVATAR_CLIENT_ZONE_CHANGED
 function OnEventAvatarClientZoneChanged()
-  RefreshMinimapOverlay()
+  RefreshMiniMapOverlay()
 end
 
 -- EVENT_AVATAR_ITEM_TAKEN
@@ -404,7 +409,7 @@ function OnEventItemTaken(params)
     end
     SavePoints()
   end
-  RefreshMinimapOverlay()
+  RefreshMiniMapOverlay()
 end
 
 --------------------------------------------------------------------------------

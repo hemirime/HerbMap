@@ -1,6 +1,9 @@
 # Created by https://www.toptal.com/developers/gitignore/api/windows,lua
 # Edit at https://www.toptal.com/developers/gitignore?templates=windows,lua
 
+# IntelliJ
+.idea/
+
 ### Lua ###
 # Compiled Lua sources
 luac.out
