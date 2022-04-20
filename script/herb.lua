@@ -119,95 +119,6 @@ function SavePoints()
   end
 end
 
-function Reaction(params)
-  local icons = ""
-  local finds = true
-  local item = itemLib.GetItemInfo(params.itemObject:GetId())
-  -----------
-  local zoneInfo = cartographer.GetZonesMapInfo(unit.GetZonesMapId(avatar.GetId())).sysName
-  if zoneInfo then
-    ------------------
-    if string.find(userMods.FromWString(item.name), Type.HERB) then
-      icons = "HERB"
-      Log("Травка "..kol+1)
-    elseif string.find(userMods.FromWString(item.name), Type.GORN) then
-      icons = "GORN"
-      Log("Руда "..kol+1)
-    end
-    ----
-    if string.find(userMods.FromWString(item.name), Type.HERB) then
-      icons = "HERB"
-    elseif string.find(userMods.FromWString(item.name), Type.GORN) then
-      icons = "GORN"
-    end
-    ----------------------
-    local pos = avatar.GetPos()
-    for i = 1, kol do
-      if herb[i].MAP == zoneInfo and pos.posX > herb[i].posX - Radius and herb[i].posX + Radius > pos.posX and pos.posY > herb[i].posY - Radius and herb[i].posY + Radius > pos.posY then
-        finds = false
-        Log("Такая точка уже есть")
-        break
-      end
-    end
-    if icons == "" then
-      finds = false
-      Log("Не определен тип ресурса")
-    end
-    if finds then
-      kol = kol + 1
-      Log("Точка записана"..kol)
-      herb[kol] = {
-        NAME = item.name,
-        ICON = icons,
-        MAP  = zoneInfo,
-        posX = pos.posX,
-        posY = pos.posY,
-        posZ = pos.posZ }
-    end
-    SavePoints()
-  end
-  OnMiniMap()
-end
-
-function OnCreat()
-  wtMiniMapPanel:Show(false)
-  MainMap:AddChild(wtListPanel)
-  LoadPoints()
-  Extract()
-  local txt = {}
-  PosXY(wtListPanel, 100, 200, 50, 20 * 5 + 55)
-  for i = 1, 2 do -- с галочкой
-    cBtn[i] = mainForm:CreateWidgetByDesc(cB:GetWidgetDesc())
-    cBtn[i]:SetName("cBtn" .. i)
-    wtListPanel:AddChild(cBtn[i])
-    PosXY(cBtn[i], 15, 20, 20 * i, 20)
-    cBtn[i]:Show(true)
-    txt[i] = mainForm:CreateWidgetByDesc(cBt:GetWidgetDesc())
-    txt[i]:SetName("cTxt" .. i)
-    wtListPanel:AddChild(txt[i])
-    PosXY(txt[i], 15 + 20, 150, 20 * i, 20)
-    txt[i]:Show(true)
-    txt[i]:SetVal("Name", userMods.ToWString(NameCBtn[i]))
-  end
-  for i = 1, 3 do -- просто кнопки
-    sBtn[i] = mainForm:CreateWidgetByDesc(sB:GetWidgetDesc())
-    sBtn[i]:SetName("sBtn" .. i)
-    wtListPanel:AddChild(sBtn[i])
-    PosXY(sBtn[i], 15, 150, 20 * i + 40, 20)
-    sBtn[i]:SetVal("Name", userMods.ToWString(NameBtn[i]))
-    sBtn[i]:Show(true)
-  end
-  if ShowMetki.HERB then
-    cBtn[1]:SetVariant(1)
-  else
-    cBtn[1]:SetVariant(0)
-  end
-  if ShowMetki.GORN then
-    cBtn[2]:SetVariant(1)
-  else
-    cBtn[2]:SetVariant(0)
-  end
-end
 
 function OnPoint()
   local markers = cartographer.GetMapMarkers(CurrentMapID())
@@ -326,7 +237,7 @@ function OnMap()
   end
 end
 
-function OnMiniMap()
+function RefreshMinimapOverlay()
   local markers = cartographer.GetMapMarkers(cartographer.GetCurrentZoneInfo().zonesMapId)
   for i, markerId in pairs(markers) do
     local markedobjects = cartographer.GetMapMarkerObjects(cartographer.GetCurrentZoneInfo().zonesMapId, markerId)
@@ -369,7 +280,7 @@ function CheckMiniSize()
     Log("Square "..Size.." "..CollectCurMap)
     if CollectSize ~= Size or CollectMap ~= CollectCurMap then
       MiniMapPanel = square
-      OnMiniMap()
+      RefreshMinimapOverlay()
       CollectSize = Size
       CollectMap = CollectCurMap
     end
@@ -381,19 +292,126 @@ function CheckMiniSize()
     Log("Circle "..Size.." "..CollectCurMap)
     if CollectSize ~= Size or CollectMap ~= CollectCurMap then
       MiniMapPanel = circle
-      OnMiniMap()
+      RefreshMinimapOverlay()
       CollectSize = Size
       CollectMap = CollectCurMap
     end
   end
 end
 
+--------------------------------------------------------------------------------
+-- EVENT HANDLERS
+--------------------------------------------------------------------------------
+
+-- EVENT_AVATAR_CREATED
+function OnCreate()
+  wtMiniMapPanel:Show(false)
+  MainMap:AddChild(wtListPanel)
+  LoadPoints()
+  Extract()
+  local txt = {}
+  PosXY(wtListPanel, 100, 200, 50, 20 * 5 + 55)
+  for i = 1, 2 do -- с галочкой
+    cBtn[i] = mainForm:CreateWidgetByDesc(cB:GetWidgetDesc())
+    cBtn[i]:SetName("cBtn" .. i)
+    wtListPanel:AddChild(cBtn[i])
+    PosXY(cBtn[i], 15, 20, 20 * i, 20)
+    cBtn[i]:Show(true)
+    txt[i] = mainForm:CreateWidgetByDesc(cBt:GetWidgetDesc())
+    txt[i]:SetName("cTxt" .. i)
+    wtListPanel:AddChild(txt[i])
+    PosXY(txt[i], 15 + 20, 150, 20 * i, 20)
+    txt[i]:Show(true)
+    txt[i]:SetVal("Name", userMods.ToWString(NameCBtn[i]))
+  end
+  for i = 1, 3 do -- просто кнопки
+    sBtn[i] = mainForm:CreateWidgetByDesc(sB:GetWidgetDesc())
+    sBtn[i]:SetName("sBtn" .. i)
+    wtListPanel:AddChild(sBtn[i])
+    PosXY(sBtn[i], 15, 150, 20 * i + 40, 20)
+    sBtn[i]:SetVal("Name", userMods.ToWString(NameBtn[i]))
+    sBtn[i]:Show(true)
+  end
+  if ShowMetki.HERB then
+    cBtn[1]:SetVariant(1)
+  else
+    cBtn[1]:SetVariant(0)
+  end
+  if ShowMetki.GORN then
+    cBtn[2]:SetVariant(1)
+  else
+    cBtn[2]:SetVariant(0)
+  end
+end
+
+-- EVENT_SECOND_TIMER
 function OnTimer()
   OnMap()
   CheckMiniSize()
   --  OnMiniMap()
 end
 
+-- EVENT_AVATAR_CLIENT_ZONE_CHANGED
+function OnEventAvatarClientZoneChanged()
+  RefreshMinimapOverlay()
+end
+
+-- EVENT_AVATAR_ITEM_TAKEN
+function OnEventItemTaken(params)
+  local icons = ""
+  local finds = true
+  local item = itemLib.GetItemInfo(params.itemObject:GetId())
+  -----------
+  local zoneInfo = cartographer.GetZonesMapInfo(unit.GetZonesMapId(avatar.GetId())).sysName
+  if zoneInfo then
+    ------------------
+    if string.find(userMods.FromWString(item.name), Type.HERB) then
+      icons = "HERB"
+      Log("Травка "..kol+1)
+    elseif string.find(userMods.FromWString(item.name), Type.GORN) then
+      icons = "GORN"
+      Log("Руда "..kol+1)
+    end
+    ----
+    if string.find(userMods.FromWString(item.name), Type.HERB) then
+      icons = "HERB"
+    elseif string.find(userMods.FromWString(item.name), Type.GORN) then
+      icons = "GORN"
+    end
+    ----------------------
+    local pos = avatar.GetPos()
+    for i = 1, kol do
+      if herb[i].MAP == zoneInfo and pos.posX > herb[i].posX - Radius and herb[i].posX + Radius > pos.posX and pos.posY > herb[i].posY - Radius and herb[i].posY + Radius > pos.posY then
+        finds = false
+        Log("Такая точка уже есть")
+        break
+      end
+    end
+    if icons == "" then
+      finds = false
+      Log("Не определен тип ресурса")
+    end
+    if finds then
+      kol = kol + 1
+      Log("Точка записана"..kol)
+      herb[kol] = {
+        NAME = item.name,
+        ICON = icons,
+        MAP  = zoneInfo,
+        posX = pos.posX,
+        posY = pos.posY,
+        posZ = pos.posZ }
+    end
+    SavePoints()
+  end
+  RefreshMinimapOverlay()
+end
+
+--------------------------------------------------------------------------------
+-- REACTION HANDLERS
+--------------------------------------------------------------------------------
+
+-- ReactionBottom
 function ReactionBottom(param)
   if DnD:IsDragging() then return end
   local widgetName = param.widget:GetName()
@@ -448,33 +466,7 @@ function ReactionBottom(param)
   end
 end
 
-function SetPosTT(wt, wtt)
-  local Placement = wt:GetRealRect()
-  local posX = Placement.x1 + 20
-  local posY = Placement.y1 - 40
-  PosXY(wtt, posX, nil, posY)
-end
-
-function ReactionOnPointing(params)
-  if params.active then
-    local name = string.sub(params.sender, 8)
-    local d = herb[tonumber(name)].NAME
-    wtInfoPanel:Show(true)
-    wtInfoPaneltxt:SetVal("Name", d)
-    wtInfoPaneltxt:SetClassVal("style", "tip_golden")
-    local m = params.widget:GetRealRect()
-    if params.widget:GetParent():GetName() == "MainPanel" then
-      params.widget:GetParent():GetParent():AddChild(wtInfoPanel)
-      SetPosTT(params.widget, wtInfoPanel)
-    else
-      stateMainForm:GetChildChecked("HerbMap", false):AddChild(wtInfoPanel)
-      SetPosTT(params.widget, wtInfoPanel)
-    end
-  else
-    wtInfoPanel:Show(false)
-  end
-end
-
+-- click_cbtn
 function click_cbtn(params)
   if DnD:IsDragging() then return end
   local widgetName = params.widget:GetName()
@@ -499,23 +491,53 @@ function click_cbtn(params)
   end
 end
 
+-- mouse_over
+function ReactionOnPointing(params)
+  if params.active then
+    local name = string.sub(params.sender, 8)
+    local d = herb[tonumber(name)].NAME
+    wtInfoPanel:Show(true)
+    wtInfoPaneltxt:SetVal("Name", d)
+    wtInfoPaneltxt:SetClassVal("style", "tip_golden")
+    local m = params.widget:GetRealRect()
+    if params.widget:GetParent():GetName() == "MainPanel" then
+      params.widget:GetParent():GetParent():AddChild(wtInfoPanel)
+      SetPosTT(params.widget, wtInfoPanel)
+    else
+      stateMainForm:GetChildChecked("HerbMap", false):AddChild(wtInfoPanel)
+      SetPosTT(params.widget, wtInfoPanel)
+    end
+  else
+    wtInfoPanel:Show(false)
+  end
+end
+
+function SetPosTT(wt, wtt)
+  local Placement = wt:GetRealRect()
+  local posX = Placement.x1 + 20
+  local posY = Placement.y1 - 40
+  PosXY(wtt, posX, nil, posY)
+end
+
 --------------------------------------------------------------------------------
--- Инициализация
+-- INITIALIZATION
 --------------------------------------------------------------------------------
 function Init()
   wtMainPanel:Show(false)
   wtMiniMapPanel:Show(false)
   if avatar.IsExist() then
-    OnCreat()
+    OnCreate()
   end
   DnD:Init(357, wtListPanel, wtListPanel, true, true, { -8, -8, -8, -8 })
+
   common.RegisterReactionHandler(ReactionBottom, "ReactionBottom")
   common.RegisterReactionHandler(click_cbtn, "click_cbtn")
-  common.RegisterEventHandler(OnTimer, "EVENT_SECOND_TIMER")
-  common.RegisterEventHandler(Reaction, "EVENT_AVATAR_ITEM_TAKEN", { actionType = "ENUM_TakeItemActionType_Craft" })
-  common.RegisterEventHandler(OnCreat, "EVENT_AVATAR_CREATED")
   common.RegisterReactionHandler(ReactionOnPointing, "mouse_over")
-  common.RegisterEventHandler(OnMiniMap, "EVENT_AVATAR_CLIENT_ZONE_CHANGED")
+
+  common.RegisterEventHandler(OnCreate, "EVENT_AVATAR_CREATED")
+  common.RegisterEventHandler(OnTimer, "EVENT_SECOND_TIMER")
+  common.RegisterEventHandler(OnEventAvatarClientZoneChanged, "EVENT_AVATAR_CLIENT_ZONE_CHANGED")
+  common.RegisterEventHandler(OnEventItemTaken, "EVENT_AVATAR_ITEM_TAKEN", { actionType = "ENUM_TakeItemActionType_Craft" })
 end
 
 --------------------------------------------------------------------------------
