@@ -97,33 +97,6 @@ function CurrentMap()
   end
 end
 
-function ConvertedMapName(mapname) -- fix to update user.cfg
-  local mapBlocks = cartographer.GetMapBlocks()
-  for i = 0, GetTableSize(mapBlocks) - 1 do
-    local mapBlockInfo = cartographer.GetMapBlockInfo(mapBlocks[i])
-    if mapBlockInfo then
-      local zones = mapBlockInfo.zonesMaps
-      for _, id in pairs(zones) do
-        local name = cartographer.GetZonesMapInfo(id).name
-        if common.GetApiType(mapname) == "WString" then
-          if common.CompareWStringEx(name, mapname) == 0 then
-            local sys = cartographer.GetZonesMapInfo(id).sysName
-            return sys
-          end
-        else return mapname
-        end
-      end
-    end
-  end
-end
-
-function Extract() -- fix to update user.cfg
-  for i = 1, GetTableSize(points) do
-    points[i].MAP = ConvertedMapName(points[i].MAP)
-  end
-  SavePoints()
-end
-
 function CurrentMapID()
   local children = wtName:GetNamedChildren()
   for i = 0, GetTableSize(children) - 1 do
@@ -152,6 +125,36 @@ function SavePoints()
   end
 end
 
+function MigrateData()
+  Migration_1_2()
+  SavePoints()
+end
+
+function Migration_1_2()
+  local mapBlocks = cartographer.GetMapBlocks()
+  local mapDict = {}
+  for _, mapBlockId in pairs(mapBlocks) do
+    local mapBlockInfo = cartographer.GetMapBlockInfo(mapBlockId)
+    if mapBlockInfo then
+      local zones = mapBlockInfo.zonesMaps
+      for _, zoneId in pairs(zones) do
+        local mapInfo = cartographer.GetZonesMapInfo(zoneId)
+        mapDict[mapInfo.name] = mapInfo.sysName
+      end
+    end
+  end
+
+  for i = 1, #points do
+    local mapName = points[i].MAP
+    if common.GetApiType(mapName) == "WString" then
+      for name, sysName in pairs(mapDict) do
+        if common.CompareWStringEx(name, mapName) == 0 then
+          points[i].MAP = sysName
+        end
+      end
+    end
+  end
+end
 
 function OnPoint()
   local markers = cartographer.GetMapMarkers(CurrentMapID())
@@ -323,7 +326,7 @@ function OnCreate()
   wtMiniMapPanel:Show(false)
   MainMap:AddChild(wtListPanel)
   LoadPoints()
-  Extract()
+  MigrateData()
   local txt = {}
   PosXY(wtListPanel, 100, 200, 50, 20 * 5 + 55)
   for i = 1, 2 do -- с галочкой
