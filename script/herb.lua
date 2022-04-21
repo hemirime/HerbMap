@@ -191,34 +191,38 @@ function OnPoint()
 end
 
 function RenderMiniMapPoints()
+  Log("Render ".. #herb .. " points")
   local geodata = cartographer.GetObjectGeodata(avatar.GetId())
-  plMini = wtMiniMapPanel:GetPlacementPlain()
-  local R = false
+  if not geodata then
+    Log("Не удалось получить геодату для текущей зоны")
+    return
+  end
+
+  local miniMapPlacement = wtMiniMapPanel:GetPlacementPlain()
+  local pixelsPerMeterX = miniMapPlacement.sizeX / geodata.width
+  local pixelsPerMeterY = miniMapPlacement.sizeY / geodata.height
+
+  local currentMapName = cartographer.GetZonesMapInfo(unit.GetZonesMapId(avatar.GetId())).sysName
   for i = 1, kol do
     if herb[i] then
-      -- сравнение названий карт
-      if cartographer.GetZonesMapInfo(unit.GetZonesMapId(avatar.GetId())).sysName == herb[i].MAP then
-        if ShowMetki.HERB and herb[i].ICON == "HERB" then
-          R = true
-        elseif ShowMetki.GORN and herb[i].ICON == "GORN" then
-          R = true
+      if currentMapName == herb[i].MAP then
+        if wtPointMini[i] then
+          local isPinVisible = (ShowMetki.HERB and herb[i].ICON == "HERB") or (ShowMetki.GORN and herb[i].ICON == "GORN")
+          wtPointMini[i]:Show(isPinVisible)
         else
-          R = false
-        end
-        if wtPointMini[i] then --если точка существует - отобразить
-          wtPointMini[i]:Show(R)
-          PosXY(wtPointMini[i], (herb[i].posX - geodata.x) * plMini.sizeX / geodata.width, 15, ((geodata.y + geodata.height) - herb[i].posY) * plMini.sizeY / geodata.height, 20)
-        else -- Если не существует - создать
           wtPointMini[i] = mainForm:CreateWidgetByDesc(wtBtn:GetWidgetDesc())
           wtPointMini[i]:SetName("wtPoint" .. i)
           wtMiniMapPanel:AddChild(wtPointMini[i])
-          --
-          PosXY(wtPointMini[i], (herb[i].posX - geodata.x) * plMini.sizeX / geodata.width, 15, ((geodata.y + geodata.height) - herb[i].posY) * plMini.sizeY / geodata.height, 20)
-          if herb[i].ICON then -- присвоить вид метки
-            local bt = common.GetAddonRelatedTexture(herb[i].ICON)
-            wtPointMini[i]:SetBackgroundTexture(bt)
+          if herb[i].ICON then
+            local textureId = common.GetAddonRelatedTexture(herb[i].ICON)
+            wtPointMini[i]:SetBackgroundTexture(textureId)
           end
         end
+        local sizeX = 15
+        local sizeY = 20
+        local posX = (herb[i].posX - geodata.x) * pixelsPerMeterX
+        local posY = ((geodata.y + geodata.height) - herb[i].posY) * pixelsPerMeterY
+        PosXY(wtPointMini[i], posX - sizeX / 2, sizeX, posY - sizeY, sizeY)
       else
         if wtPointMini[i] then
           wtPointMini[i]:Show(false)
