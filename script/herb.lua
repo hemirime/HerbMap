@@ -14,12 +14,8 @@ function GetMiniMapWidget(parent, name)
   }
 end
 
-local wtMainPanel = mainForm:GetChildChecked("MainPanel", false)
-local wtMiniMapPanel = mainForm:GetChildChecked("MiniMapPanel", false)
-local wtBtn = mainForm:GetChildChecked("btn", false)
-
-local MainMap = stateMainForm:GetChildChecked("Map", false):GetChildChecked("MainPanel", false)
-local wtName = MainMap:GetChildChecked("LayoutMain", false):GetChildChecked("LayoutFrameLeft", false):GetChildChecked("LayoutFrameLeftHor", false):GetChildChecked("LayoutFrameLeftVert", false):GetChildChecked("MapEnginePanel", false):GetChildChecked("Markers", false):GetChildChecked("MapTextPanel", false)
+local MainMap = stateMainForm:GetChildChecked("Map", false):GetChildChecked("MainPanel", false):GetChildChecked("LayoutMain", false):GetChildChecked("MapEnginePanel", true)
+local MainMapLabel = MainMap:GetChildChecked("Texts", false):GetChildChecked("MapLabel", false)
 
 local MiniMap = stateMainForm:GetChildChecked("Minimap", false)
 local SquareMiniMap = GetMiniMapWidget(MiniMap, "Square")
@@ -31,15 +27,18 @@ local miniMapInfo = {
   Engine = nil,
 }
 
+local wtMainPanel = mainForm:GetChildChecked("MainPanel", false)
+local wtMiniMapPanel = mainForm:GetChildChecked("MiniMapPanel", false)
+local wtBtn = mainForm:GetChildChecked("btn", false)
+
 local points = {}
 
 local wtPoint = {}
 local wtPointMini = {}
 
 local ShowMap = true
-local geodata
+local mapSystemNames = {}
 
-local vid = 0
 -- чек нопки дл€ отображени€ информации
 local wtListPanel = mainForm:GetChildChecked("listpanel", false)
 local cB = wtListPanel:GetChildChecked("cbtn", false)
@@ -86,29 +85,6 @@ function IsPointInCircle(point, center, radius)
   return dx^2 + dy^2 <= radius^2
 end
 
-function CurrentMap()
-  local children = wtName:GetNamedChildren()
-  for i = 0, GetTableSize(children) - 1 do
-    local wtChild = children[i]
-    local name = wtChild:GetName()
-    if wtChild:IsVisible() then
-      return name
-    end
-  end
-end
-
-function CurrentMapID()
-  local children = wtName:GetNamedChildren()
-  for i = 0, GetTableSize(children) - 1 do
-    local wtChild = children[i]
-    local name = wtChild:GetName()
-    if wtChild:IsVisible() then
-      local id = cartographer.GetZonesMapId(name)
-      return id
-    end
-  end
-end
-
 function LoadPoints()
   local loaded = userMods.GetGlobalConfigSection("HerbMap")
   if not loaded then
@@ -125,80 +101,58 @@ function SavePoints()
   end
 end
 
+function LoadMapsDictionary()
+  local zones = rules.GetZonesMaps()
+  for _, zoneId in pairs(zones) do
+    local mapInfo = cartographer.GetZonesMapInfo(zoneId)
+    mapSystemNames[userMods.FromWString(mapInfo.name)] = mapInfo.sysName
+  end
+end
+
 function MigrateData()
   Migration_1_2()
   SavePoints()
 end
 
 function Migration_1_2()
-  local mapBlocks = cartographer.GetMapBlocks()
-  local mapDict = {}
-  for _, mapBlockId in pairs(mapBlocks) do
-    local mapBlockInfo = cartographer.GetMapBlockInfo(mapBlockId)
-    if mapBlockInfo then
-      local zones = mapBlockInfo.zonesMaps
-      for _, zoneId in pairs(zones) do
-        local mapInfo = cartographer.GetZonesMapInfo(zoneId)
-        mapDict[mapInfo.name] = mapInfo.sysName
+  function MapNameToSystemName(mapName)
+    local normalizedMapName = userMods.FromWString(mapName)
+    for name, sysName in pairs(mapSystemNames) do
+      if name == normalizedMapName then
+        return sysName
       end
     end
+    return mapName
   end
 
   for i = 1, #points do
     local mapName = points[i].MAP
     if common.GetApiType(mapName) == "WString" then
-      for name, sysName in pairs(mapDict) do
-        if common.CompareWStringEx(name, mapName) == 0 then
-          points[i].MAP = sysName
-        end
-      end
+      points[i].MAP = MapNameToSystemName(mapName)
     end
   end
 end
 
-function OnPoint()
-  local markers = cartographer.GetMapMarkers(CurrentMapID())
-  for i, markerId in pairs(markers) do
-    local markedobjects = cartographer.GetMapMarkerObjects(CurrentMapID(), markerId)
-    for _, v in pairs(markedobjects) do
-      geodata = v.geodata
-    end
+function SelectedMapName()
+  return userMods.FromWString(common.ExtractWStringFromValuedText(MainMapLabel:GetValuedText()))
+end
+
+function SelectedMapID()
+  local sysName = mapSystemNames[SelectedMapName()]
+  return cartographer.GetZonesMapId(sysName)
+end
+
+function RenderMapPoints()
+  local mapId = SelectedMapID()
+  local markers = cartographer.GetMapMarkers(mapId)
+  local markerObjects = cartographer.GetMapMarkerObjects(mapId, markers[0])
+  local geodata = markerObjects[0].geodata
+  if not geodata then
+    Log("Ќе удалось получить геодату дл€ выбранной зоны: " .. SelectedMapName())
+    return
   end
-  local pl = wtMainPanel:GetPlacementPlain()
-  local R = false
-  for i = 1, #points do
-    if points[i] then
-      -- сравнение названий карт
-      if CurrentMap() == points[i].MAP then
-        if Settings.ShowPoints.HERB and points[i].ICON == "HERB" then
-          R = true
-        elseif Settings.ShowPoints.ORE and points[i].ICON == "GORN" then
-          R = true
-        else
-          R = false
-        end
-        if wtPoint[i] then --если точка существует - отобразить
-          wtPoint[i]:Show(R)
-          PosXY(wtPoint[i], (points[i].posX - geodata.x) * pl.sizeX / geodata.width - 12, 15, ((geodata.y + geodata.height) - points[i].posY) * pl.sizeY / geodata.height - 20, 20)
-        else -- ≈сли не существует - создать
-          wtPoint[i] = mainForm:CreateWidgetByDesc(wtBtn:GetWidgetDesc())
-          wtPoint[i]:SetName("wtPoint" .. i)
-          wtPoint[i]:SetTransparentInput(false)
-          wtMainPanel:AddChild(wtPoint[i])
-          MainMap:AddChild(wtMainPanel)
-          PosXY(wtPoint[i], (points[i].posX - geodata.x) * pl.sizeX / geodata.width - 12, 15, ((geodata.y + geodata.height) - points[i].posY) * pl.sizeY / geodata.height - 20, 20)
-          if points[i].ICON then -- присвоить вид метки
-            local bt = common.GetAddonRelatedTexture(points[i].ICON)
-            wtPoint[i]:SetBackgroundTexture(bt)
-          end
-        end
-      else
-        if wtPoint[i] then
-          wtPoint[i]:Show(false)
-        end
-      end
-    end
-  end
+
+  RenderPoints(wtMainPanel:GetPlacementPlain(), geodata, mapSystemNames[SelectedMapName()], wtPoint, wtMainPanel)
 end
 
 function RenderMiniMapPoints()
@@ -209,80 +163,59 @@ function RenderMiniMapPoints()
     return
   end
 
-  local miniMapPlacement = wtMiniMapPanel:GetPlacementPlain()
-  local pixelsPerMeterX = miniMapPlacement.sizeX / geodata.width
-  local pixelsPerMeterY = miniMapPlacement.sizeY / geodata.height
-
   local currentMapName = cartographer.GetZonesMapInfo(unit.GetZonesMapId(avatar.GetId())).sysName
+  RenderPoints(wtMiniMapPanel:GetPlacementPlain(), geodata, currentMapName, wtPointMini, wtMiniMapPanel)
+end
+
+function RenderPoints(mapSize, geodata, mapSysName, container, parent)
+  local pixelsPerMeterX = mapSize.sizeX / geodata.width
+  local pixelsPerMeterY = mapSize.sizeY / geodata.height
+
   for i = 1, #points do
-    if currentMapName == points[i].MAP then
-      if wtPointMini[i] then
+    if mapSysName == points[i].MAP then
+      if container[i] then
         local isPinVisible = (Settings.ShowPoints.HERB and points[i].ICON == "HERB") or (Settings.ShowPoints.ORE and points[i].ICON == "GORN")
-        wtPointMini[i]:Show(isPinVisible)
+        container[i]:Show(isPinVisible)
       else
-        wtPointMini[i] = mainForm:CreateWidgetByDesc(wtBtn:GetWidgetDesc())
-        wtPointMini[i]:SetName("wtPoint" .. i)
-        wtMiniMapPanel:AddChild(wtPointMini[i])
+        container[i] = mainForm:CreateWidgetByDesc(wtBtn:GetWidgetDesc())
+        container[i]:SetName("wtPoint" .. i)
+        parent:AddChild(container[i])
         if points[i].ICON then
           local textureId = common.GetAddonRelatedTexture(points[i].ICON)
-          wtPointMini[i]:SetBackgroundTexture(textureId)
+          container[i]:SetBackgroundTexture(textureId)
         end
       end
       local sizeX = 15
       local sizeY = 20
       local posX = (points[i].posX - geodata.x) * pixelsPerMeterX
       local posY = ((geodata.y + geodata.height) - points[i].posY) * pixelsPerMeterY
-      PosXY(wtPointMini[i], posX - sizeX / 2, sizeX, posY - sizeY, sizeY)
+      PosXY(container[i], posX - sizeX / 2, sizeX, posY - sizeY, sizeY)
     else
-      if wtPointMini[i] then
-        wtPointMini[i]:Show(false)
+      if container[i] then
+        container[i]:Show(false)
       end
     end
   end
 end
 
-function OnMap()
-  if MainMap:IsVisible() then -- отображаетс€ ли карта вданный момент
-    local lm = MainMap:GetChildChecked("LayoutFrameLeftVert", true) --карта
-    local pl = lm:GetPlacementPlain()
-    local lfr = MainMap:GetChildChecked("LayoutFrameRight", true)
-    local plr = lfr:GetPlacementPlain()
-    local Placement = wtMainPanel:GetPlacementPlain()
-    wtMainPanel:Show(ShowMap)
-    wtListPanel:Show(true)
-    local QuestShow = MainMap:GetChildChecked("ButtonQuestsHide", true)
-    if QuestShow:IsVisible() then --—о списком квестов
-      Placement.posX = pl.posX - (plr.sizeX / 2)
-      Placement.sizeX = pl.sizeX
-      Placement.posY = pl.posY
-      Placement.sizeY = pl.sizeY
-      wtMainPanel:SetPlacementPlain(Placement)
-      vid = 1
-      OnPoint()
-    else -- Ѕез списка квестов
-      Placement.posX = pl.posX
-      Placement.sizeX = pl.sizeX
-      Placement.posY = pl.posY
-      Placement.sizeY = pl.sizeY
-      wtMainPanel:SetPlacementPlain(Placement)
-      vid = 0
-      OnPoint()
-    end
-  else
+function RefreshMapOverlay()
+  if not MainMap:IsVisibleEx() then
     wtMainPanel:Show(false)
     wtListPanel:Show(false)
+    return
   end
+
+  wtMainPanel:Show(ShowMap)
+  wtListPanel:Show(true)
+
+  local placement = MainMap:GetPlacementPlain()
+  wtMainPanel:SetPlacementPlain(placement)
+  MainMap:AddChild(wtMainPanel)
+
+  RenderMapPoints()
 end
 
 function RefreshMiniMapOverlay()
-  local markers = cartographer.GetMapMarkers(cartographer.GetCurrentZoneInfo().zonesMapId)
-  for i, markerId in pairs(markers) do
-    local markedobjects = cartographer.GetMapMarkerObjects(cartographer.GetCurrentZoneInfo().zonesMapId, markerId)
-    for _, v in pairs(markedobjects) do
-      geodata = v.geodata
-    end
-  end
-  --
   local activeMiniMap = GetActiveMiniMap()
   if not activeMiniMap then
     wtMiniMapPanel:Show(false)
@@ -364,7 +297,7 @@ end
 
 -- EVENT_SECOND_TIMER
 function OnTimer()
-  OnMap()
+  RefreshMapOverlay()
   CheckMiniMapScale()
   --  OnMiniMap()
 end
@@ -456,7 +389,7 @@ function ReactionBottom(param)
     local sizeKol = #points
     for i = 1, #points do
       if points[i] then
-        if CurrentMap() == points[i].MAP then
+        if CurrentMapSysName() == points[i].MAP then
           Log("“очки на данной карте найдены "..i.." всего точек "..#points)
           for i = 1, #points do
             if wtPoint[i] then
@@ -546,6 +479,8 @@ end
 -- INITIALIZATION
 --------------------------------------------------------------------------------
 function Init()
+  LoadMapsDictionary()
+
   wtMainPanel:Show(false)
   wtMiniMapPanel:Show(false)
   if avatar.IsExist() then
