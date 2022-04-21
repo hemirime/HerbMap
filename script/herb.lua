@@ -16,9 +16,10 @@ end
 
 local wtMainPanel = mainForm:GetChildChecked("MainPanel", false)
 local wtMiniMapPanel = mainForm:GetChildChecked("MiniMapPanel", false)
+local wtBtn = mainForm:GetChildChecked("btn", false)
+
 local MainMap = stateMainForm:GetChildChecked("Map", false):GetChildChecked("MainPanel", false)
 local wtName = MainMap:GetChildChecked("LayoutMain", false):GetChildChecked("LayoutFrameLeft", false):GetChildChecked("LayoutFrameLeftHor", false):GetChildChecked("LayoutFrameLeftVert", false):GetChildChecked("MapEnginePanel", false):GetChildChecked("Markers", false):GetChildChecked("MapTextPanel", false)
-local wtBtn = mainForm:GetChildChecked("btn", false)
 
 local MiniMap = stateMainForm:GetChildChecked("Minimap", false)
 local SquareMiniMap = GetMiniMapWidget(MiniMap, "Square")
@@ -30,13 +31,13 @@ local miniMapInfo = {
   Engine = nil,
 }
 
-local herb = {}
-local kol = 0
+local points = {}
+
 local wtPoint = {}
 local wtPointMini = {}
+
 local ShowMap = true
 local geodata
-local plMini
 
 local vid = 0
 -- чекКнопки для отображения информации
@@ -107,10 +108,10 @@ function ConvertedMapName(mapname) -- fix to update user.cfg
 end
 
 function Extract() -- fix to update user.cfg
-  for i = 1, GetTableSize(herb) do
-    herb[i].MAP = ConvertedMapName(herb[i].MAP)
-    SavePoints()
+  for i = 1, GetTableSize(points) do
+    points[i].MAP = ConvertedMapName(points[i].MAP)
   end
+  SavePoints()
 end
 
 function CurrentMapID()
@@ -126,21 +127,18 @@ function CurrentMapID()
 end
 
 function LoadPoints()
-  local ss = userMods.GetGlobalConfigSection("HerbMap")
-  if ss then
-    for i = 1, GetTableSize(ss) do
-      if ss[i] then
-        kol = kol + 1
-        herb[kol] = ss[i]
-      end
-    end
+  local loaded = userMods.GetGlobalConfigSection("HerbMap")
+  if not loaded then
+    return
   end
+  points = loaded
+  Log(#points .. " точек загружено")
 end
 
 function SavePoints()
-  if herb then
-    userMods.SetGlobalConfigSection("HerbMap", herb)
-    Log(GetTableSize(herb).." точек записано")
+  if points then
+    userMods.SetGlobalConfigSection("HerbMap", points)
+    Log(#points .." точек записано")
   end
 end
 
@@ -155,29 +153,29 @@ function OnPoint()
   end
   local pl = wtMainPanel:GetPlacementPlain()
   local R = false
-  for i = 1, kol do
-    if herb[i] then
+  for i = 1, #points do
+    if points[i] then
       -- сравнение названий карт
-      if CurrentMap() == herb[i].MAP then
-        if ShowMetki.HERB and herb[i].ICON == "HERB" then
+      if CurrentMap() == points[i].MAP then
+        if ShowMetki.HERB and points[i].ICON == "HERB" then
           R = true
-        elseif ShowMetki.GORN and herb[i].ICON == "GORN" then
+        elseif ShowMetki.GORN and points[i].ICON == "GORN" then
           R = true
         else
           R = false
         end
         if wtPoint[i] then --если точка существует - отобразить
           wtPoint[i]:Show(R)
-          PosXY(wtPoint[i], (herb[i].posX - geodata.x) * pl.sizeX / geodata.width - 12, 15, ((geodata.y + geodata.height) - herb[i].posY) * pl.sizeY / geodata.height - 20, 20)
+          PosXY(wtPoint[i], (points[i].posX - geodata.x) * pl.sizeX / geodata.width - 12, 15, ((geodata.y + geodata.height) - points[i].posY) * pl.sizeY / geodata.height - 20, 20)
         else -- Если не существует - создать
           wtPoint[i] = mainForm:CreateWidgetByDesc(wtBtn:GetWidgetDesc())
           wtPoint[i]:SetName("wtPoint" .. i)
           wtPoint[i]:SetTransparentInput(false)
           wtMainPanel:AddChild(wtPoint[i])
           MainMap:AddChild(wtMainPanel)
-          PosXY(wtPoint[i], (herb[i].posX - geodata.x) * pl.sizeX / geodata.width - 12, 15, ((geodata.y + geodata.height) - herb[i].posY) * pl.sizeY / geodata.height - 20, 20)
-          if herb[i].ICON then -- присвоить вид метки
-            local bt = common.GetAddonRelatedTexture(herb[i].ICON)
+          PosXY(wtPoint[i], (points[i].posX - geodata.x) * pl.sizeX / geodata.width - 12, 15, ((geodata.y + geodata.height) - points[i].posY) * pl.sizeY / geodata.height - 20, 20)
+          if points[i].ICON then -- присвоить вид метки
+            local bt = common.GetAddonRelatedTexture(points[i].ICON)
             wtPoint[i]:SetBackgroundTexture(bt)
           end
         end
@@ -191,7 +189,7 @@ function OnPoint()
 end
 
 function RenderMiniMapPoints()
-  Log("Render ".. #herb .. " points")
+  Log("Render " .. #points .. " points")
   local geodata = cartographer.GetObjectGeodata(avatar.GetId())
   if not geodata then
     Log("Не удалось получить геодату для текущей зоны")
@@ -203,30 +201,28 @@ function RenderMiniMapPoints()
   local pixelsPerMeterY = miniMapPlacement.sizeY / geodata.height
 
   local currentMapName = cartographer.GetZonesMapInfo(unit.GetZonesMapId(avatar.GetId())).sysName
-  for i = 1, kol do
-    if herb[i] then
-      if currentMapName == herb[i].MAP then
-        if wtPointMini[i] then
-          local isPinVisible = (ShowMetki.HERB and herb[i].ICON == "HERB") or (ShowMetki.GORN and herb[i].ICON == "GORN")
-          wtPointMini[i]:Show(isPinVisible)
-        else
-          wtPointMini[i] = mainForm:CreateWidgetByDesc(wtBtn:GetWidgetDesc())
-          wtPointMini[i]:SetName("wtPoint" .. i)
-          wtMiniMapPanel:AddChild(wtPointMini[i])
-          if herb[i].ICON then
-            local textureId = common.GetAddonRelatedTexture(herb[i].ICON)
-            wtPointMini[i]:SetBackgroundTexture(textureId)
-          end
-        end
-        local sizeX = 15
-        local sizeY = 20
-        local posX = (herb[i].posX - geodata.x) * pixelsPerMeterX
-        local posY = ((geodata.y + geodata.height) - herb[i].posY) * pixelsPerMeterY
-        PosXY(wtPointMini[i], posX - sizeX / 2, sizeX, posY - sizeY, sizeY)
+  for i = 1, #points do
+    if currentMapName == points[i].MAP then
+      if wtPointMini[i] then
+        local isPinVisible = (ShowMetki.HERB and points[i].ICON == "HERB") or (ShowMetki.GORN and points[i].ICON == "GORN")
+        wtPointMini[i]:Show(isPinVisible)
       else
-        if wtPointMini[i] then
-          wtPointMini[i]:Show(false)
+        wtPointMini[i] = mainForm:CreateWidgetByDesc(wtBtn:GetWidgetDesc())
+        wtPointMini[i]:SetName("wtPoint" .. i)
+        wtMiniMapPanel:AddChild(wtPointMini[i])
+        if points[i].ICON then
+          local textureId = common.GetAddonRelatedTexture(points[i].ICON)
+          wtPointMini[i]:SetBackgroundTexture(textureId)
         end
+      end
+      local sizeX = 15
+      local sizeY = 20
+      local posX = (points[i].posX - geodata.x) * pixelsPerMeterX
+      local posY = ((geodata.y + geodata.height) - points[i].posY) * pixelsPerMeterY
+      PosXY(wtPointMini[i], posX - sizeX / 2, sizeX, posY - sizeY, sizeY)
+    else
+      if wtPointMini[i] then
+        wtPointMini[i]:Show(false)
       end
     end
   end
@@ -376,10 +372,10 @@ function OnEventItemTaken(params)
     ------------------
     if string.find(userMods.FromWString(item.name), Type.HERB) then
       icons = "HERB"
-      Log("Травка "..kol+1)
+      Log("Травка ")
     elseif string.find(userMods.FromWString(item.name), Type.GORN) then
       icons = "GORN"
-      Log("Руда "..kol+1)
+      Log("Руда ")
     end
     ----
     if string.find(userMods.FromWString(item.name), Type.HERB) then
@@ -389,8 +385,8 @@ function OnEventItemTaken(params)
     end
     ----------------------
     local pos = avatar.GetPos()
-    for i = 1, kol do
-      if herb[i].MAP == zoneInfo and pos.posX > herb[i].posX - Radius and herb[i].posX + Radius > pos.posX and pos.posY > herb[i].posY - Radius and herb[i].posY + Radius > pos.posY then
+    for i = 1, #points do
+      if points[i].MAP == zoneInfo and pos.posX > points[i].posX - Radius and points[i].posX + Radius > pos.posX and pos.posY > points[i].posY - Radius and points[i].posY + Radius > pos.posY then
         finds = false
         Log("Такая точка уже есть")
         break
@@ -401,15 +397,15 @@ function OnEventItemTaken(params)
       Log("Не определен тип ресурса")
     end
     if finds then
-      kol = kol + 1
-      Log("Точка записана"..kol)
-      herb[kol] = {
+      points[#points + 1] = {
         NAME = item.name,
         ICON = icons,
         MAP  = zoneInfo,
         posX = pos.posX,
         posY = pos.posY,
-        posZ = pos.posZ }
+        posZ = pos.posZ
+      }
+      Log("Точка записана, всего: " .. #points)
     end
     SavePoints()
   end
@@ -437,31 +433,30 @@ function ReactionBottom(param)
     Log("Сброс точек на карте")
     -------------------------------------------
     -- сравнение названий карт
-    local sizeKol = kol
-    for i = 1, kol do
-      if herb[i] then
-        if CurrentMap() == herb[i].MAP then
-          Log("Точки на данной карте найдены "..i.." всего точек "..kol)
-          for i = 1, kol do
+    local sizeKol = #points
+    for i = 1, #points do
+      if points[i] then
+        if CurrentMap() == points[i].MAP then
+          Log("Точки на данной карте найдены "..i.." всего точек "..#points)
+          for i = 1, #points do
             if wtPoint[i] then
               wtPoint[i]:DestroyWidget()
             end
           end
           for ii = i, sizeKol - 1 do
-            herb[ii] = herb[ii + 1]
+            points[ii] = points[ii + 1]
           end
-          herb[sizeKol] = nil
+          points[sizeKol] = nil
           sizeKol = sizeKol - 1
         else
-          Log("Точки на данной карте не найдены всего их "..kol)
+          Log("Точки на данной карте не найдены всего их "..#points)
         end
       end
     end
-    kol = sizeKol
     SavePoints()
     -------------------------------------------
   elseif widgetName == "sBtn3" then -- сброс всех точек
-    for i = 1, kol do
+    for i = 1, #points do
       if wtPoint[i] then
         wtPoint[i]:DestroyWidget()
       end
@@ -469,8 +464,7 @@ function ReactionBottom(param)
         wtPointMini[i]:DestroyWidget()
       end
     end
-    kol = 0
-    herb = {}
+    points = {}
     SavePoints()
   end
 end
@@ -504,7 +498,7 @@ end
 function ReactionOnPointing(params)
   if params.active then
     local name = string.sub(params.sender, 8)
-    local d = herb[tonumber(name)].NAME
+    local d = points[tonumber(name)].NAME
     wtInfoPanel:Show(true)
     wtInfoPaneltxt:SetVal("Name", d)
     wtInfoPaneltxt:SetClassVal("style", "tip_golden")
