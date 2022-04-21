@@ -54,6 +54,8 @@ local wtInfoPanel = mainForm:GetChildChecked("Tooltip", false)
 local wtInfoPaneltxt = wtInfoPanel:GetChildChecked("TooltipText", false)
 
 --------------------------------------------------------------------------------
+-- HELPERS
+--------------------------------------------------------------------------------
 
 function GetActiveMiniMap()
   if SquareMiniMap.Engine:IsVisibleEx() then
@@ -74,6 +76,14 @@ function PosXY(wt, posX, sizeX, posY, sizeY, alignX, alignY)
   if alignX then Placement.alignX = alignX end
   if alignY then Placement.alignY = alignY end
   wt:SetPlacementPlain(Placement)
+end
+
+function IsPointInCircle(point, center, radius)
+  local dx = math.abs(point.posX - center.posX)
+  local dy = math.abs(point.posY - center.posY)
+  if dx + dy <= radius then return true end
+  if dx > radius or dy > radius then return false end
+  return dx^2 + dy^2 <= radius^2
 end
 
 function CurrentMap()
@@ -363,52 +373,59 @@ end
 
 -- EVENT_AVATAR_ITEM_TAKEN
 function OnEventItemTaken(params)
-  local icons = ""
-  local finds = true
-  local item = itemLib.GetItemInfo(params.itemObject:GetId())
-  -----------
-  local zoneInfo = cartographer.GetZonesMapInfo(unit.GetZonesMapId(avatar.GetId())).sysName
-  if zoneInfo then
-    ------------------
-    if string.find(userMods.FromWString(item.name), Type.HERB) then
-      icons = "HERB"
-      Log("Травка ")
-    elseif string.find(userMods.FromWString(item.name), Type.GORN) then
-      icons = "GORN"
-      Log("Руда ")
-    end
-    ----
-    if string.find(userMods.FromWString(item.name), Type.HERB) then
-      icons = "HERB"
-    elseif string.find(userMods.FromWString(item.name), Type.GORN) then
-      icons = "GORN"
-    end
-    ----------------------
-    local pos = avatar.GetPos()
-    for i = 1, #points do
-      if points[i].MAP == zoneInfo and pos.posX > points[i].posX - Radius and points[i].posX + Radius > pos.posX and pos.posY > points[i].posY - Radius and points[i].posY + Radius > pos.posY then
-        finds = false
-        Log("Такая точка уже есть")
-        break
-      end
-    end
-    if icons == "" then
-      finds = false
-      Log("Не определен тип ресурса")
-    end
-    if finds then
-      points[#points + 1] = {
-        NAME = item.name,
-        ICON = icons,
-        MAP  = zoneInfo,
-        posX = pos.posX,
-        posY = pos.posY,
-        posZ = pos.posZ
-      }
-      Log("Точка записана, всего: " .. #points)
-    end
-    SavePoints()
+  local itemId = params.itemObject:GetId()
+
+  local itemSource = itemLib.GetSource(itemId)
+  if not itemSource or itemSource ~= "ENUM_ItemSource_FixedDrop" then
+    return
   end
+
+  local craftInfo = itemLib.GetCraftInfo(itemId)
+  if not craftInfo then
+    return
+  end
+
+  local item = itemLib.GetItemInfo(itemId)
+  Log("Взят предмет: " .. userMods.FromWString(item.name))
+
+  local icon
+  for _, skill in pairs(craftInfo.craftingSkillsInfo) do
+    local skillId = skill.skillId
+    local skillInfo = skillId and skillId:GetInfo()
+    local sysName = skillInfo and skillInfo.sysName
+    if sysName == "Blacksmithing" or sysName == "Weaponsmithing" then
+      Log("Это руда")
+      icon = "GORN"
+      break
+    elseif sysName == "Alchemy" then
+      Log("Это трава")
+      icon = "HERB"
+      break
+    else
+      Log("Не определен тип ресурса")
+      return
+    end
+  end
+
+  local currentMapName = cartographer.GetZonesMapInfo(unit.GetZonesMapId(avatar.GetId())).sysName
+  local pos = avatar.GetPos()
+  for i = 1, #points do
+    if points[i].MAP == currentMapName and IsPointInCircle(pos, points[i], Radius) then
+      Log("Такая точка уже есть")
+      return
+    end
+  end
+
+  points[#points + 1] = {
+    NAME = item.name,
+    ICON = icon,
+    MAP  = currentMapName,
+    posX = pos.posX,
+    posY = pos.posY,
+    posZ = pos.posZ
+  }
+  Log("Точка записана, всего: " .. #points)
+  SavePoints()
   RefreshMiniMapOverlay()
 end
 
