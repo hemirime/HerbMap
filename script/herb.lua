@@ -167,9 +167,9 @@ function OnPoint()
     if points[i] then
       -- сравнение названий карт
       if CurrentMap() == points[i].MAP then
-        if ShowMetki.HERB and points[i].ICON == "HERB" then
+        if Settings.ShowPoints.HERB and points[i].ICON == "HERB" then
           R = true
-        elseif ShowMetki.GORN and points[i].ICON == "GORN" then
+        elseif Settings.ShowPoints.ORE and points[i].ICON == "GORN" then
           R = true
         else
           R = false
@@ -214,7 +214,7 @@ function RenderMiniMapPoints()
   for i = 1, #points do
     if currentMapName == points[i].MAP then
       if wtPointMini[i] then
-        local isPinVisible = (ShowMetki.HERB and points[i].ICON == "HERB") or (ShowMetki.GORN and points[i].ICON == "GORN")
+        local isPinVisible = (Settings.ShowPoints.HERB and points[i].ICON == "HERB") or (Settings.ShowPoints.ORE and points[i].ICON == "GORN")
         wtPointMini[i]:Show(isPinVisible)
       else
         wtPointMini[i] = mainForm:CreateWidgetByDesc(wtBtn:GetWidgetDesc())
@@ -347,12 +347,12 @@ function OnCreate()
     sBtn[i]:SetVal("Name", userMods.ToWString(NameBtn[i]))
     sBtn[i]:Show(true)
   end
-  if ShowMetki.HERB then
+  if Settings.ShowPoints.HERB then
     cBtn[1]:SetVariant(1)
   else
     cBtn[1]:SetVariant(0)
   end
-  if ShowMetki.GORN then
+  if Settings.ShowPoints.ORE then
     cBtn[2]:SetVariant(1)
   else
     cBtn[2]:SetVariant(0)
@@ -410,7 +410,7 @@ function OnEventItemTaken(params)
   local currentMapName = cartographer.GetZonesMapInfo(unit.GetZonesMapId(avatar.GetId())).sysName
   local pos = avatar.GetPos()
   for i = 1, #points do
-    if points[i].MAP == currentMapName and IsPointInCircle(pos, points[i], Radius) then
+    if points[i].MAP == currentMapName and IsPointInCircle(pos, points[i], Settings.Radius) then
       Log("“ака€ точка уже есть")
       return
     end
@@ -494,19 +494,19 @@ function click_cbtn(params)
     if cBtn[1]:GetVariant() == 1 then
       -- скрыть
       cBtn[1]:SetVariant(0)
-      ShowMetki.HERB = false
+      Settings.ShowPoints.HERB = false
     else -- отобразить
       cBtn[1]:SetVariant(1)
-      ShowMetki.HERB = true
+      Settings.ShowPoints.HERB = true
     end
   elseif widgetName == "cBtn2" then -- √орное
     if cBtn[2]:GetVariant() == 1 then
       -- скрыть
       cBtn[2]:SetVariant(0)
-      ShowMetki.GORN = false
+      Settings.ShowPoints.ORE = false
     else -- отобразить
       cBtn[2]:SetVariant(1)
-      ShowMetki.GORN = true
+      Settings.ShowPoints.ORE = true
     end
   end
 end
