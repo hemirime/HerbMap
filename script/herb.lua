@@ -145,10 +145,14 @@ end
 function RenderMapPoints()
   local mapId = SelectedMapID()
   local markers = cartographer.GetMapMarkers(mapId)
-  local markerObjects = cartographer.GetMapMarkerObjects(mapId, markers[0])
-  local geodata = markerObjects[0].geodata
+  local anyMarker = markers[0]
+  local markerObjects = anyMarker and cartographer.GetMapMarkerObjects(mapId, anyMarker)
+  local geodata = markerObjects and markerObjects[0].geodata
   if not geodata then
     Log("Ќе удалось получить геодату дл€ выбранной зоны: " .. SelectedMapName())
+    for _, wt in pairs(wtPoint) do
+      wt:Show(false)
+    end
     return
   end
 
@@ -160,6 +164,9 @@ function RenderMiniMapPoints()
   local geodata = cartographer.GetObjectGeodata(avatar.GetId())
   if not geodata then
     Log("Ќе удалось получить геодату дл€ текущей зоны")
+    for _, wt in pairs(wtPointMini) do
+      wt:Show(false)
+    end
     return
   end
 
