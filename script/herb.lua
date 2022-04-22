@@ -173,12 +173,13 @@ function RenderPoints(mapSize, geodata, mapSysName, container, parent)
 
   for i = 1, #points do
     if mapSysName == points[i].MAP then
+      local isPinVisible = (Settings.ShowPoints.HERB and points[i].ICON == "HERB") or (Settings.ShowPoints.ORE and points[i].ICON == "GORN")
       if container[i] then
-        local isPinVisible = (Settings.ShowPoints.HERB and points[i].ICON == "HERB") or (Settings.ShowPoints.ORE and points[i].ICON == "GORN")
         container[i]:Show(isPinVisible)
       else
         container[i] = mainForm:CreateWidgetByDesc(wtBtn:GetWidgetDesc())
         container[i]:SetName("wtPoint" .. i)
+        container[i]:Show(isPinVisible)
         parent:AddChild(container[i])
         if points[i].ICON then
           local textureId = common.GetAddonRelatedTexture(points[i].ICON)
