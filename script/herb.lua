@@ -354,7 +354,7 @@ function OnEventItemTaken(params)
   local currentMapName = cartographer.GetZonesMapInfo(unit.GetZonesMapId(avatar.GetId())).sysName
   local pos = avatar.GetPos()
   for i = 1, #points do
-    if points[i].MAP == currentMapName and IsPointInCircle(pos, points[i], Settings.Radius) then
+    if points[i].MAP == currentMapName and points[i].ICON == icon and IsPointInCircle(pos, points[i], Settings.IgnoreNewResourcesRadius) then
       Log("Такая точка уже есть")
       return
     end
