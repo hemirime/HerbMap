@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <WidgetForm>
 	<Name>HerbMap</Name>
-	<Priority>11250</Priority>
+	<Priority>13000</Priority>
 	<Children>
 		<Item href="MiniMapPanel.(WidgetPanel).xdb#xpointer(/WidgetPanel)" /> 
 		<Item href="MainPanel.(WidgetPanel).xdb#xpointer(/WidgetPanel)" /> 

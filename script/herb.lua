@@ -29,6 +29,10 @@ local miniMapInfo = {
 
 local wtMainPanel = mainForm:GetChildChecked("MainPanel", false)
 local wtMiniMapPanel = mainForm:GetChildChecked("MiniMapPanel", false)
+
+local wtTooltip = mainForm:GetChildChecked("Tooltip", false)
+local wtTooltipText = wtTooltip:GetChildChecked("TooltipText", false)
+
 local wtBtn = mainForm:GetChildChecked("btn", false)
 
 local points = {}
@@ -49,8 +53,6 @@ local cBtn = {} -- с галочкой
 local sB = wtListPanel:GetChildChecked("bottom", false)
 sB:Show(false)
 local sBtn = {} -- просто кнопки
-local wtInfoPanel = mainForm:GetChildChecked("Tooltip", false)
-local wtInfoPaneltxt = wtInfoPanel:GetChildChecked("TooltipText", false)
 
 --------------------------------------------------------------------------------
 -- HELPERS
@@ -456,31 +458,27 @@ function click_cbtn(params)
 end
 
 -- mouse_over
-function ReactionOnPointing(params)
+function ShowTooltip(params)
   if params.active then
-    local name = string.sub(params.sender, 8)
-    local d = points[tonumber(name)].NAME
-    wtInfoPanel:Show(true)
-    wtInfoPaneltxt:SetVal("Name", d)
-    wtInfoPaneltxt:SetClassVal("style", "tip_golden")
-    local m = params.widget:GetRealRect()
-    if params.widget:GetParent():GetName() == "MainPanel" then
-      params.widget:GetParent():GetParent():AddChild(wtInfoPanel)
-      SetPosTT(params.widget, wtInfoPanel)
-    else
-      stateMainForm:GetChildChecked("HerbMap", false):AddChild(wtInfoPanel)
-      SetPosTT(params.widget, wtInfoPanel)
-    end
+    local index = tonumber(string.sub(params.sender, 8))
+    local pointName = points[index].NAME
+    wtTooltipText:SetClassVal("style", "tip_white")
+    wtTooltipText:SetVal("Name", pointName)
+    PosTooltip(wtTooltip, params.widget)
+    wtTooltip:Show(true)
   else
-    wtInfoPanel:Show(false)
+    wtTooltip:Show(false)
   end
 end
 
-function SetPosTT(wt, wtt)
-  local Placement = wt:GetRealRect()
-  local posX = Placement.x1 + 20
-  local posY = Placement.y1 - 40
-  PosXY(wtt, posX, nil, posY)
+function PosTooltip(tooltip, anchorWidget)
+  local rect = tooltip:GetRealRect()
+  local tooltipWidth = rect.x2 - rect.x1
+
+  local anchorRect = anchorWidget:GetRealRect()
+  local posX = anchorRect.x1 - tooltipWidth - 2
+  local posY = anchorRect.y1
+  PosXY(tooltip, posX, nil, posY)
 end
 
 --------------------------------------------------------------------------------
@@ -498,7 +496,7 @@ function Init()
 
   common.RegisterReactionHandler(ReactionBottom, "ReactionBottom")
   common.RegisterReactionHandler(click_cbtn, "click_cbtn")
-  common.RegisterReactionHandler(ReactionOnPointing, "mouse_over")
+  common.RegisterReactionHandler(ShowTooltip, "mouse_over")
 
   common.RegisterEventHandler(OnCreate, "EVENT_AVATAR_CREATED")
   common.RegisterEventHandler(OnTimer, "EVENT_SECOND_TIMER")

@@ -12,13 +12,11 @@
 			<Sizing>WIDGET_SIZING_CHILDREN</Sizing>
 			<Align>WIDGET_ALIGN_LOW_ABS</Align>
 			<Pos>0</Pos>
-			<Size>10</Size>
 		</X>
 		<Y>
 			<Sizing>WIDGET_SIZING_CHILDREN</Sizing>
 			<Align>WIDGET_ALIGN_LOW_ABS</Align>
 			<Pos>0</Pos>
-			<Size>40</Size>
 		</Y>
 	</Placement>
 	<TransparentInput>true</TransparentInput>
