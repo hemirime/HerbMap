@@ -6,18 +6,11 @@
 	<type>DXT5</type>
 	<width>128</width>
 	<height>128</height>
-	<realWidth>128</realWidth>
-	<realHeight>128</realHeight>
+	<realWidth>84</realWidth>
+	<realHeight>84</realHeight>
 	<disableLODControl>false</disableLODControl>
 	<alphaTex>true</alphaTex>
-	<binaryFileSize>474</binaryFileSize>
+	<binaryFileSize>653</binaryFileSize>
 	<binaryFile href="Tooltip.(UITexture).bin" />
-	<binaryFileSize2>0</binaryFileSize2>
-	<binaryFile2 href="" />
-	<sourceFile href="Tooltip.tga" />
-	<sourceFileCRC>995548123</sourceFileCRC>
 	<wrap>false</wrap>
-	<LocalizationInfo />
-	<atlasPart>true</atlasPart>
-	<pool>UNDEFINED</pool>
 </UITexture>
