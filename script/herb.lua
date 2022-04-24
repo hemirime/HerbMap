@@ -145,11 +145,19 @@ function SelectedMapID()
 end
 
 function RenderMapPoints()
-  local mapId = SelectedMapID()
-  local markers = cartographer.GetMapMarkers(mapId)
-  local anyMarker = markers[0]
-  local markerObjects = anyMarker and cartographer.GetMapMarkerObjects(mapId, anyMarker)
-  local geodata = markerObjects and markerObjects[0].geodata
+  function FindGeodata(mapId)
+    local markers = cartographer.GetMapMarkers(mapId)
+    for _, markerId in pairs(markers) do
+      local markerObjects = cartographer.GetMapMarkerObjects(mapId, markerId)
+      for _, data in pairs(markerObjects) do
+        if data.geodata then
+          return data.geodata
+        end
+      end
+    end
+  end
+
+  local geodata = FindGeodata(SelectedMapID())
   if not geodata then
     Log("Не удалось получить геодату для выбранной зоны: " .. SelectedMapName())
     for _, wt in pairs(wtPoint) do
@@ -266,10 +274,12 @@ end
 
 -- EVENT_AVATAR_CREATED
 function OnCreate()
-  wtMiniMapPanel:Show(false)
-  MainMap:AddChild(wtListPanel)
+  LoadMapsDictionary()
   LoadPoints()
   MigrateData()
+
+  MainMap:AddChild(wtListPanel)
+
   local txt = {}
   PosXY(wtListPanel, 100, 200, 50, 20 * 5 + 55)
   for i = 1, 2 do -- с галочкой
@@ -303,6 +313,10 @@ function OnCreate()
   else
     cBtn[2]:SetVariant(0)
   end
+
+  common.RegisterEventHandler(OnTimer, "EVENT_SECOND_TIMER")
+  common.RegisterEventHandler(OnEventAvatarClientZoneChanged, "EVENT_AVATAR_CLIENT_ZONE_CHANGED")
+  common.RegisterEventHandler(OnEventItemTaken, "EVENT_AVATAR_ITEM_TAKEN", { actionType = "ENUM_TakeItemActionType_Craft" })
 end
 
 -- EVENT_SECOND_TIMER
@@ -485,23 +499,20 @@ end
 -- INITIALIZATION
 --------------------------------------------------------------------------------
 function Init()
-  LoadMapsDictionary()
+  DnD:Init(357, wtListPanel, wtListPanel, true, true, { -8, -8, -8, -8 })
 
   wtMainPanel:Show(false)
   wtMiniMapPanel:Show(false)
+
   if avatar.IsExist() then
     OnCreate()
+  else
+    common.RegisterEventHandler(OnCreate, "EVENT_AVATAR_CREATED")
   end
-  DnD:Init(357, wtListPanel, wtListPanel, true, true, { -8, -8, -8, -8 })
 
   common.RegisterReactionHandler(ReactionBottom, "ReactionBottom")
   common.RegisterReactionHandler(click_cbtn, "click_cbtn")
   common.RegisterReactionHandler(ShowTooltip, "mouse_over")
-
-  common.RegisterEventHandler(OnCreate, "EVENT_AVATAR_CREATED")
-  common.RegisterEventHandler(OnTimer, "EVENT_SECOND_TIMER")
-  common.RegisterEventHandler(OnEventAvatarClientZoneChanged, "EVENT_AVATAR_CLIENT_ZONE_CHANGED")
-  common.RegisterEventHandler(OnEventItemTaken, "EVENT_AVATAR_ITEM_TAKEN", { actionType = "ENUM_TakeItemActionType_Craft" })
 end
 
 --------------------------------------------------------------------------------
