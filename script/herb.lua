@@ -54,6 +54,10 @@ local sB = wtListPanel:GetChildChecked("bottom", false)
 sB:Show(false)
 local sBtn = {} -- просто кнопки
 
+local wtPopup = mainForm:CreateWidgetByDesc(wtListPanel:GetWidgetDesc())
+wtPopup:SetName("Popup")
+local wtPopupButtons = {}
+local PopupPointIndex
 --------------------------------------------------------------------------------
 -- HELPERS
 --------------------------------------------------------------------------------
@@ -314,6 +318,16 @@ function OnCreate()
     cBtn[2]:SetVariant(0)
   end
 
+  for i = 1, 2 do
+    wtPopupButtons[i] = mainForm:CreateWidgetByDesc(sB:GetWidgetDesc())
+    wtPopupButtons[i]:SetName("PopupBtn" .. i)
+    wtPopupButtons[i]:SetVal("Name", userMods.ToWString(NameTT[i]))
+    wtPopupButtons[i]:Show(true)
+    wtPopup:AddChild(wtPopupButtons[i])
+    PosXY(wtPopupButtons[i], 15, 100, 20 * i - 10, 20)
+  end
+  PosXY(wtPopup,nil, 150,nil,20*2+45)
+
   common.RegisterEventHandler(OnTimer, "EVENT_SECOND_TIMER")
   common.RegisterEventHandler(OnEventAvatarClientZoneChanged, "EVENT_AVATAR_CLIENT_ZONE_CHANGED")
   common.RegisterEventHandler(OnEventItemTaken, "EVENT_AVATAR_ITEM_TAKEN", { actionType = "ENUM_TakeItemActionType_Craft" })
@@ -396,13 +410,20 @@ end
 -- ReactionBottom
 function ReactionBottom(param)
   if DnD:IsDragging() then return end
+
   local widgetName = param.widget:GetName()
-  if widgetName == "sBtn1" then -- скрыть
+  if widgetName == "sBtn1" then
     ToggleMapOverlayVisibility()
   elseif widgetName == "sBtn2" then
     DeleteAllPointsOnMap(mapSystemNames[SelectedMapName()])
   elseif widgetName == "sBtn3" then
     DeleteAllPoints()
+  elseif widgetName == "PopupBtn1" then
+    DeletePoint(PopupPointIndex)
+    PopupPointIndex = nil
+    wtPopup:Show(false)
+  elseif widgetName == "PopupBtn2" then
+    wtPopup:Show(false)
   end
 end
 
@@ -447,6 +468,36 @@ function DeleteAllPointsOnMap(sysMapName)
       end
   end
   Log("Удалено точек: " .. (size - #points) .. ", всего: " .. #points)
+  SavePoints()
+end
+
+function DeletePoint(index)
+  if not index then return end
+
+  local point = points[index]
+  Log("Удаляем точку: " .. userMods.FromWString(point.NAME) .. ", x: " .. point.posX .. ", y: " .. point.posY)
+
+  if wtPoint[index] then
+    wtPoint[index]:DestroyWidget()
+  end
+  if wtPointMini[index] then
+    wtPointMini[index]:DestroyWidget()
+  end
+
+  local lastIndex = #points
+  points[index] = points[lastIndex]
+  points[lastIndex] = nil
+
+  function MoveWidget(parent)
+    parent[index] = parent[lastIndex]
+    if parent[index] then
+      parent[index]:SetName("wtPoint" .. index)
+    end
+    parent[lastIndex] = nil
+  end
+  MoveWidget(wtPoint)
+  MoveWidget(wtPointMini)
+
   SavePoints()
 end
 
@@ -499,6 +550,13 @@ function PosTooltip(tooltip, anchorWidget)
   PosXY(tooltip, posX, nil, posY)
 end
 
+function ShowPopup(params)
+  PopupPointIndex = tonumber(string.sub(params.sender, 8))
+  wtPopup:Show(true)
+  local rect = params.widget:GetRealRect()
+  PosXY(wtPopup, rect.x1, nil, rect.y1)
+end
+
 --------------------------------------------------------------------------------
 -- INITIALIZATION
 --------------------------------------------------------------------------------
@@ -517,6 +575,7 @@ function Init()
   common.RegisterReactionHandler(ReactionBottom, "ReactionBottom")
   common.RegisterReactionHandler(click_cbtn, "click_cbtn")
   common.RegisterReactionHandler(ShowTooltip, "mouse_over")
+  common.RegisterReactionHandler(ShowPopup, "object_right_click")
 end
 
 --------------------------------------------------------------------------------
