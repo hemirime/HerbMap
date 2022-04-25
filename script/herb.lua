@@ -398,52 +398,56 @@ function ReactionBottom(param)
   if DnD:IsDragging() then return end
   local widgetName = param.widget:GetName()
   if widgetName == "sBtn1" then -- скрыть
-    Log("Скрыть...")
-    if wtMainPanel:IsVisible() then
-      wtMainPanel:Show(false)
-      ShowMap = false
-    else
-      wtMainPanel:Show(true)
-      ShowMap = true
-    end
-  elseif widgetName == "sBtn2" then -- Сброс точек на карте
-    Log("Сброс точек на карте")
-    -------------------------------------------
-    -- сравнение названий карт
-    local sizeKol = #points
-    for i = 1, #points do
-      if points[i] then
-        if CurrentMapSysName() == points[i].MAP then
-          Log("Точки на данной карте найдены "..i.." всего точек "..#points)
-          for i = 1, #points do
-            if wtPoint[i] then
-              wtPoint[i]:DestroyWidget()
-            end
-          end
-          for ii = i, sizeKol - 1 do
-            points[ii] = points[ii + 1]
-          end
-          points[sizeKol] = nil
-          sizeKol = sizeKol - 1
-        else
-          Log("Точки на данной карте не найдены всего их "..#points)
-        end
-      end
-    end
-    SavePoints()
-    -------------------------------------------
-  elseif widgetName == "sBtn3" then -- сброс всех точек
-    for i = 1, #points do
-      if wtPoint[i] then
-        wtPoint[i]:DestroyWidget()
-      end
-      if wtPointMini[i] then
-        wtPointMini[i]:DestroyWidget()
-      end
-    end
-    points = {}
-    SavePoints()
+    ToggleMapOverlayVisibility()
+  elseif widgetName == "sBtn2" then
+    DeleteAllPointsOnMap(mapSystemNames[SelectedMapName()])
+  elseif widgetName == "sBtn3" then
+    DeleteAllPoints()
   end
+end
+
+function ToggleMapOverlayVisibility()
+  Log("Скрыть/Показать точки на карте")
+  ShowMap = not ShowMap
+  wtMainPanel:Show(ShowMap)
+end
+
+function DeleteAllPoints()
+  for i = 1, #points do
+    if wtPoint[i] then
+      wtPoint[i]:DestroyWidget()
+    end
+    if wtPointMini[i] then
+      wtPointMini[i]:DestroyWidget()
+    end
+  end
+  points = {}
+  Log("Все точки удалены")
+  SavePoints()
+end
+
+function DeleteAllPointsOnMap(sysMapName)
+  Log("Сброс точек на карте: " .. sysMapName)
+  local j, size = 1, #points
+  for i = 1, size do
+      if sysMapName == points[i].MAP then
+        if wtPoint[i] then
+          wtPoint[i]:DestroyWidget()
+        end
+        if wtPointMini[i] then
+          wtPointMini[i]:DestroyWidget()
+        end
+        points[i] = nil
+      else
+        if i ~= j then
+          points[j] = points[i]
+          points[i] = nil
+        end
+        j = j + 1
+      end
+  end
+  Log("Удалено точек: " .. (size - #points) .. ", всего: " .. #points)
+  SavePoints()
 end
 
 -- click_cbtn
