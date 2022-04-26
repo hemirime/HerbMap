@@ -8,9 +8,12 @@ function Log(message)
 end
 
 function GetMiniMapWidget(parent, name)
+  local widget = parent:GetChildChecked(name, false)
   return {
     Name = name,
-    Engine = parent:GetChildChecked(name, false):GetChildChecked("Map", false):GetChildChecked("MapEngine", false)
+    Widget = widget,
+    Engine = widget:GetChildChecked("Map", false):GetChildChecked("MapEngine", false),
+    Controls = widget:GetChildChecked("Controls", false)
   }
 end
 
@@ -26,6 +29,8 @@ local miniMapInfo = {
   MapSize = nil,
   Engine = nil,
 }
+
+local IsTimerEventRegistered = false
 
 local wtMainPanel = mainForm:GetChildChecked("MainPanel", false)
 local wtMiniMapPanel = mainForm:GetChildChecked("MiniMapPanel", false)
@@ -63,9 +68,9 @@ local PopupPointIndex
 --------------------------------------------------------------------------------
 
 function GetActiveMiniMap()
-  if SquareMiniMap.Engine:IsVisibleEx() then
+  if SquareMiniMap.Widget:IsVisible() then
     return SquareMiniMap
-  elseif CircleMiniMap.Engine:IsVisibleEx() then
+  elseif CircleMiniMap.Widget:IsVisible() then
     return CircleMiniMap
   else
     return nil
@@ -174,7 +179,6 @@ function RenderMapPoints()
 end
 
 function RenderMiniMapPoints()
-  Log("Render " .. #points .. " points")
   local geodata = cartographer.GetObjectGeodata(avatar.GetId())
   if not geodata then
     Log("Ќе удалось получить геодату дл€ текущей зоны")
@@ -328,16 +332,76 @@ function OnCreate()
   end
   PosXY(wtPopup,nil, 150,nil,20*2+45)
 
-  common.RegisterEventHandler(OnTimer, "EVENT_SECOND_TIMER")
+  local mapRoot = stateMainForm:GetChildChecked("Map", false)
+  mapRoot:GetChildChecked("MainPanel", false):SetOnShowNotification(true)
+  mapRoot:GetChildChecked("DropdownBarL1Menu", false):SetOnShowNotification(true)
+  mapRoot:GetChildChecked("DropdownBarL2Menu", false):SetOnShowNotification(true)
+
+  SquareMiniMap.Widget:SetOnShowNotification(true)
+  SquareMiniMap.Controls:SetOnShowNotification(true)
+
+  CircleMiniMap.Widget:SetOnShowNotification(true)
+  CircleMiniMap.Controls:SetOnShowNotification(true)
+
   common.RegisterEventHandler(OnEventAvatarClientZoneChanged, "EVENT_AVATAR_CLIENT_ZONE_CHANGED")
   common.RegisterEventHandler(OnEventItemTaken, "EVENT_AVATAR_ITEM_TAKEN", { actionType = "ENUM_TakeItemActionType_Craft" })
+  common.RegisterEventHandler(OnWidgetShow, "EVENT_WIDGET_SHOW_CHANGED")
+
+  CheckMiniMapScale()
+end
+
+-- EVENT_WIDGET_SHOW_CHANGED
+function OnWidgetShow(params)
+  local sender = params.widget
+  local senderName = sender:GetName()
+  local parentName = sender:GetParent():GetName()
+
+  function IsMainMap()
+    return senderName == "MainPanel" and parentName == "Map"
+  end
+  function IsSelectMapMenuClosed()
+    return (senderName == "DropdownBarL1Menu" or senderName == "DropdownBarL2Menu") and parentName == "Map" and not sender:IsVisible()
+  end
+  function IsMiniMap()
+    return (senderName == "Square" or senderName == "Circle") and parentName == "Minimap"
+  end
+  function IsMiniMapControls()
+    return senderName == "Controls" and (parentName == "Square" or parentName == "Circle")
+  end
+
+  if IsMainMap() or IsSelectMapMenuClosed() then
+    RefreshMapOverlay()
+    wtTooltip:Show(false)
+    wtPopup:Show(false)
+  end
+  if IsMiniMap() then
+    CheckMiniMapScale()
+    --RefreshMiniMapOverlay()
+  end
+  if IsMiniMapControls() then
+    ToggleMiniMapScaleTracking()
+  end
+end
+
+function ToggleMiniMapScaleTracking()
+  if IsTimerEventRegistered then
+    if not (SquareMiniMap.Controls:IsVisible() or CircleMiniMap.Controls:IsVisible()) then
+      Log("= Unregister timer =")
+      common.UnRegisterEventHandler(OnTimer, "EVENT_SECOND_TIMER")
+      IsTimerEventRegistered = false
+    end
+  else
+    if SquareMiniMap.Controls:IsVisible() or CircleMiniMap.Controls:IsVisible() then
+      Log("= Register timer =")
+      common.RegisterEventHandler(OnTimer, "EVENT_SECOND_TIMER")
+      IsTimerEventRegistered = true
+    end
+  end
 end
 
 -- EVENT_SECOND_TIMER
 function OnTimer()
-  RefreshMapOverlay()
   CheckMiniMapScale()
-  --  OnMiniMap()
 end
 
 -- EVENT_AVATAR_CLIENT_ZONE_CHANGED
