@@ -27,7 +27,6 @@ local CircleMiniMap = GetMiniMapWidget(MiniMap, "Circle")
 local miniMapInfo = {
   Name = nil,
   MapSize = nil,
-  Engine = nil,
 }
 
 local IsTimerEventRegistered = false
@@ -241,25 +240,10 @@ function RefreshMapOverlay()
   RenderMapPoints()
 end
 
-function RefreshMiniMapOverlay()
-  local activeMiniMap = GetActiveMiniMap()
-  if not activeMiniMap then
-    wtMiniMapPanel:Show(false)
-    return
-  end
-
-  wtMiniMapPanel:Show(true)
-
-  local placement = activeMiniMap.Engine:GetPlacementPlain()
-  PosXY(wtMiniMapPanel, nil, placement.sizeX, nil, placement.sizeY)
-  activeMiniMap.Engine:AddChild(wtMiniMapPanel)
-
-  RenderMiniMapPoints()
-end
-
 function CheckMiniMapScale()
   local activeMiniMap = GetActiveMiniMap()
   if not activeMiniMap then
+    Log("Миникарта скрыта")
     return
   end
 
@@ -271,8 +255,17 @@ function CheckMiniMapScale()
     Log("Изменился масштаб миникарты: " .. mapSize .. " и/или форма: " .. name)
     miniMapInfo.Name = name
     miniMapInfo.MapSize = mapSize
-    miniMapInfo.Engine = activeMiniMap.Engine
-    RefreshMiniMapOverlay()
+
+    PosXY(wtMiniMapPanel, nil, pl.sizeX, nil, pl.sizeY)
+    activeMiniMap.Engine:AddChild(wtMiniMapPanel)
+
+    for i = 1, #points do
+      if wtPointMini[i] then
+        wtPointMini[i]:DestroyWidget()
+        wtPointMini[i] = nil
+      end
+    end
+    RenderMiniMapPoints()
   end
 end
 
@@ -287,6 +280,7 @@ function OnCreate()
   MigrateData()
 
   MainMap:AddChild(wtListPanel)
+  CheckMiniMapScale()
 
   local txt = {}
   PosXY(wtListPanel, 100, 200, 50, 20 * 5 + 55)
@@ -346,8 +340,6 @@ function OnCreate()
   common.RegisterEventHandler(OnEventAvatarClientZoneChanged, "EVENT_AVATAR_CLIENT_ZONE_CHANGED")
   common.RegisterEventHandler(OnEventItemTaken, "EVENT_AVATAR_ITEM_TAKEN", { actionType = "ENUM_TakeItemActionType_Craft" })
   common.RegisterEventHandler(OnWidgetShow, "EVENT_WIDGET_SHOW_CHANGED")
-
-  CheckMiniMapScale()
 end
 
 -- EVENT_WIDGET_SHOW_CHANGED
@@ -376,7 +368,6 @@ function OnWidgetShow(params)
   end
   if IsMiniMap() then
     CheckMiniMapScale()
-    --RefreshMiniMapOverlay()
   end
   if IsMiniMapControls() then
     ToggleMiniMapScaleTracking()
@@ -406,7 +397,7 @@ end
 
 -- EVENT_AVATAR_CLIENT_ZONE_CHANGED
 function OnEventAvatarClientZoneChanged()
-  RefreshMiniMapOverlay()
+  RenderMiniMapPoints()
 end
 
 -- EVENT_AVATAR_ITEM_TAKEN
@@ -464,7 +455,7 @@ function OnEventItemTaken(params)
   }
   Log("Точка записана, всего: " .. #points)
   SavePoints()
-  RefreshMiniMapOverlay()
+  RenderMiniMapPoints()
 end
 
 --------------------------------------------------------------------------------
@@ -626,9 +617,6 @@ end
 --------------------------------------------------------------------------------
 function Init()
   DnD:Init(357, wtListPanel, wtListPanel, true, true, { -8, -8, -8, -8 })
-
-  wtMainPanel:Show(false)
-  wtMiniMapPanel:Show(false)
 
   if avatar.IsExist() then
     OnCreate()
