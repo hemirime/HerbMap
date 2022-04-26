@@ -463,7 +463,7 @@ end
 --------------------------------------------------------------------------------
 
 -- ReactionBottom
-function ReactionBottom(param)
+function OnButtonClicked(param)
   if DnD:IsDragging() then return end
 
   local widgetName = param.widget:GetName()
@@ -557,27 +557,27 @@ function DeletePoint(index)
 end
 
 -- click_cbtn
-function click_cbtn(params)
+function OnCheckboxClicked(params)
   if DnD:IsDragging() then return end
+
   local widgetName = params.widget:GetName()
-  if widgetName == "cBtn1" then -- Травничество
-    if cBtn[1]:GetVariant() == 1 then
-      -- скрыть
-      cBtn[1]:SetVariant(0)
-      Settings.ShowPoints.HERB = false
-    else -- отобразить
-      cBtn[1]:SetVariant(1)
-      Settings.ShowPoints.HERB = true
+
+  function ToggleCheckbox(index)
+    if cBtn[index]:GetVariant() == 1 then
+      cBtn[index]:SetVariant(0) -- [ ]
+      return false
+    else
+      cBtn[index]:SetVariant(1) -- [x]
+      return true
     end
-  elseif widgetName == "cBtn2" then -- Горное
-    if cBtn[2]:GetVariant() == 1 then
-      -- скрыть
-      cBtn[2]:SetVariant(0)
-      Settings.ShowPoints.ORE = false
-    else -- отобразить
-      cBtn[2]:SetVariant(1)
-      Settings.ShowPoints.ORE = true
-    end
+  end
+
+  if widgetName == "cBtn1" then
+    Settings.ShowPoints.HERB = ToggleCheckbox(1)
+    RenderMapPoints()
+  elseif widgetName == "cBtn2" then
+    Settings.ShowPoints.ORE = ToggleCheckbox(2)
+    RenderMapPoints()
   end
 end
 
@@ -624,8 +624,8 @@ function Init()
     common.RegisterEventHandler(OnCreate, "EVENT_AVATAR_CREATED")
   end
 
-  common.RegisterReactionHandler(ReactionBottom, "ReactionBottom")
-  common.RegisterReactionHandler(click_cbtn, "click_cbtn")
+  common.RegisterReactionHandler(OnButtonClicked, "ReactionBottom")
+  common.RegisterReactionHandler(OnCheckboxClicked, "click_cbtn")
   common.RegisterReactionHandler(ShowTooltip, "mouse_over")
   common.RegisterReactionHandler(ShowPopup, "object_right_click")
 end
