@@ -11,12 +11,6 @@
 	<disableLODControl>false</disableLODControl>
 	<alphaTex>true</alphaTex>
 	<binaryFileSize>312</binaryFileSize>
-	<binaryFile href="metka.(UITexture).bin" />
-	<binaryFileSize2>0</binaryFileSize2>
-	<binaryFile2 href="" />
-	<sourceFile href="metka.tga" />
-	<sourceFileCRC>1994894866</sourceFileCRC>
+	<binaryFile href="GreenPin.(UITexture).bin" />
 	<wrap>false</wrap>
-	<LocalizationInfo />
-	<atlasPart>true</atlasPart>
 </UITexture>

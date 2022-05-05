@@ -22,7 +22,7 @@
   <author>Jed(Zeon)</author>
   <revision>1.2</revision>
   <texts href=""/>
-  <textures href="wg/res/Icons.(UIRelatedTextures).xdb#xpointer(/UIRelatedTextures)"/>
+  <textures href="Textures/Textures.(UIRelatedTextures).xdb"/>
   <update>2013-08-21 00:12:00</update>
   <visObjects href=""/>
   <www>http://alloder.pro/files/file/176-herbmap/</www>

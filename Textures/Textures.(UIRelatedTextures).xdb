@@ -3,11 +3,11 @@
 	<Items>
 		<Item>
 			<name>HERB</name>
-			<textureItem href="btn/metka.(UISingleTexture).xdb#xpointer(/UISingleTexture)" />
+			<textureItem href="GreenPin/GreenPin.(UISingleTexture).xdb" />
 		</Item>
 		<Item>
 			<name>GORN</name>
-			<textureItem href="btn/metka2.(UISingleTexture).xdb#xpointer(/UISingleTexture)" />
+			<textureItem href="BluePin/BluePin.(UISingleTexture).xdb" />
 		</Item>
 	</Items>
 </UIRelatedTextures>
