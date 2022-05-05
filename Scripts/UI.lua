@@ -41,10 +41,11 @@ function Repeat(count, block)
   return items
 end
 
-function Frame(root)
+function Frame(name, content)
   local frame = mainForm:CreateWidgetByDesc(frameDesc)
-  frame:AddChild(root)
-  local placement = root:GetPlacementPlain()
+  frame:SetName(name)
+  frame:AddChild(content)
+  local placement = content:GetPlacementPlain()
   SetSize(frame, placement.sizeX, placement.sizeY)
   frame:Show(true)
   return frame

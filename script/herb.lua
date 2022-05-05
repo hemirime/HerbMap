@@ -58,9 +58,7 @@ local sB = wtListPanel:GetChildChecked("bottom", false)
 sB:Show(false)
 local sBtn = {} -- просто кнопки
 
-local wtPopup = mainForm:CreateWidgetByDesc(wtListPanel:GetWidgetDesc())
-wtPopup:SetName("Popup")
-local wtPopupButtons = {}
+local wtPopup
 local PopupPointIndex
 --------------------------------------------------------------------------------
 -- HELPERS
@@ -305,15 +303,20 @@ function OnCreate()
     cBtn[2]:SetVariant(0)
   end
 
-  for i = 1, 2 do
-    wtPopupButtons[i] = mainForm:CreateWidgetByDesc(sB:GetWidgetDesc())
-    wtPopupButtons[i]:SetName("PopupBtn" .. i)
-    wtPopupButtons[i]:SetVal("Name", userMods.ToWString(NameTT[i]))
-    wtPopupButtons[i]:Show(true)
-    wtPopup:AddChild(wtPopupButtons[i])
-    PosXY(wtPopupButtons[i], 15, 100, 20 * i - 10, 20)
-  end
-  PosXY(wtPopup,nil, 150,nil,20*2+45)
+  wtPopup = Frame("Popup",
+      VStack(2, { all = 12 }, WIDGET_ALIGN_LOW) {
+        Repeat(2, function(index)
+          local btn = mainForm:CreateWidgetByDesc(sB:GetWidgetDesc())
+          btn:SetName("PopupBtn" .. index)
+          btn:SetVal("Name", userMods.ToWString(NameTT[index]))
+          btn:Show(true)
+          SetSize(btn, 100, 20)
+          return btn
+        end
+        )
+      }
+  )
+  wtPopup:Show(false)
 
   local mapRoot = stateMainForm:GetChildChecked("Map", false)
   mapRoot:GetChildChecked("MainPanel", false):SetOnShowNotification(true)
@@ -594,9 +597,9 @@ end
 
 function ShowPopup(params)
   PopupPointIndex = tonumber(string.sub(params.sender, 8))
-  wtPopup:Show(true)
   local rect = params.widget:GetRealRect()
-  PosXY(wtPopup, rect.x1, nil, rect.y1)
+  PosXY(wtPopup, rect.x1, nil, rect.y1, nil, WIDGET_ALIGN_LOW_ABS, WIDGET_ALIGN_LOW_ABS)
+  wtPopup:Show(true)
 end
 
 --------------------------------------------------------------------------------
