@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<WidgetPanel>
+    <Name>FrameTemplate</Name>
+    <Priority>0</Priority>
+    <BackLayer href="Textures/Container.(WidgetLayerTiledTexture).xdb" />
+    <Visible>false</Visible>
+</WidgetPanel>

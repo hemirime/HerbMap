@@ -3,11 +3,13 @@
 	<Name>HerbMap</Name>
 	<Priority>13000</Priority>
 	<Children>
-		<Item href="MiniMapPanel.(WidgetPanel).xdb#xpointer(/WidgetPanel)" /> 
-		<Item href="MainPanel.(WidgetPanel).xdb#xpointer(/WidgetPanel)" /> 
-		<Item href="ListPanel.(WidgetPanel).xdb#xpointer(/WidgetPanel)" /> 
-		<Item href="res/btn/btn.(WidgetButton).xdb#xpointer(/WidgetButton)" />
-		<Item href="res/Tooltip/Tooltip.(WidgetPanel).xdb#xpointer(/WidgetPanel)" />
+		<Item href="MiniMapPanel.(WidgetPanel).xdb" />
+		<Item href="MainPanel.(WidgetPanel).xdb" />
+		<Item href="ListPanel.(WidgetPanel).xdb" />
+		<Item href="res/btn/btn.(WidgetButton).xdb" />
+		<Item href="res/Tooltip/Tooltip.(WidgetPanel).xdb" />
+		<Item href="../Widgets/Frame/FrameTemplate.(WidgetPanel).xdb" />
+		<Item href="../Widgets/StackTemplate.(WidgetPanel).xdb" />
 	</Children>
 	<BackLayer href="" />
 	<Placement>

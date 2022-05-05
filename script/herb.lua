@@ -76,17 +76,6 @@ function GetActiveMiniMap()
   end
 end
 
-function PosXY(wt, posX, sizeX, posY, sizeY, alignX, alignY)
-  local Placement = wt:GetPlacementPlain()
-  if posX then Placement.posX = posX end
-  if sizeX then Placement.sizeX = sizeX end
-  if posY then Placement.posY = posY end
-  if sizeY then Placement.sizeY = sizeY end
-  if alignX then Placement.alignX = alignX end
-  if alignY then Placement.alignY = alignY end
-  wt:SetPlacementPlain(Placement)
-end
-
 function IsPointInCircle(point, center, radius)
   local dx = math.abs(point.posX - center.posX)
   local dy = math.abs(point.posY - center.posY)
@@ -377,13 +366,11 @@ end
 function ToggleMiniMapScaleTracking()
   if IsTimerEventRegistered then
     if not (SquareMiniMap.Controls:IsVisible() or CircleMiniMap.Controls:IsVisible()) then
-      Log("= Unregister timer =")
       common.UnRegisterEventHandler(OnTimer, "EVENT_SECOND_TIMER")
       IsTimerEventRegistered = false
     end
   else
     if SquareMiniMap.Controls:IsVisible() or CircleMiniMap.Controls:IsVisible() then
-      Log("= Register timer =")
       common.RegisterEventHandler(OnTimer, "EVENT_SECOND_TIMER")
       IsTimerEventRegistered = true
     end

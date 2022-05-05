@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <UIRelatedTextures>
 	<Items>
-
 		<Item>
 			<name>HERB</name>
 			<textureItem href="btn/metka.(UISingleTexture).xdb#xpointer(/UISingleTexture)" />

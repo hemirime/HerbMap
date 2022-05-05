@@ -13,6 +13,7 @@
   <localizedDescFileRef href="desc.txt"/>
   <ScriptFileRefs>
     <Item href="/Mods/SampleCommon/SampleAddonBase.lua"/>
+    <Item href="Scripts/UI.lua"/>
     <Item href="script/ScriptLIB.lua"/>
     <Item href="script/LibDnD.lua"/>
     <Item href="config.txt"/>
