@@ -2,9 +2,6 @@
 <WidgetPanel>
 	<Name>MiniMapPanel</Name>
 	<Priority>9000</Priority>
-	<Children>
-	</Children>
-	<BackLayer href="" />
 	<Placement>
 		<X>
 			<Align>WIDGET_ALIGN_BOTH</Align>
