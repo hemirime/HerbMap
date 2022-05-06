@@ -5,6 +5,8 @@ local UI = {}
 
 local stackDesc = mainForm:GetChildChecked("StackTemplate", false):GetWidgetDesc()
 local frameDesc = mainForm:GetChildChecked("FrameTemplate", false):GetWidgetDesc()
+local checkBoxDesc = mainForm:GetChildChecked("CheckboxTemplate", false):GetWidgetDesc()
+local buttonDesc = mainForm:GetChildChecked("bottom", false):GetWidgetDesc()
 
 function PosXY(wt, posX, sizeX, posY, sizeY, alignX, alignY)
   local placement = wt:GetPlacementPlain()
@@ -48,7 +50,23 @@ function Frame(name, content)
   local placement = content:GetPlacementPlain()
   SetSize(frame, placement.sizeX, placement.sizeY)
   frame:Show(true)
-  return frame
+  return frame, content
+end
+
+function Checkbox(name, isChecked)
+  local checkbox = mainForm:CreateWidgetByDesc(checkBoxDesc)
+  checkbox:SetName(name)
+  checkbox:SetVariant(isChecked and 1 or 0)
+  checkbox:Show(true)
+  return checkbox
+end
+
+function Button(name, title)
+  local button = mainForm:CreateWidgetByDesc(buttonDesc)
+  button:SetName(name)
+  button:SetVal("Name", title)
+  button:Show(true)
+  return button
 end
 
 function HStack(spacing, edges, gravity)
@@ -124,6 +142,8 @@ function UI.Flatten(item, result)
     for _, v in pairs(item) do
       UI.Flatten(v, arr)
     end
+  elseif type(item) == 'function' then
+    arr[#arr + 1] = item()
   else
     arr[#arr + 1] = item
   end

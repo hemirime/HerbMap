@@ -3,4 +3,6 @@
 	<Name>StackTemplate</Name>
 	<Priority>0</Priority>
 	<Visible>false</Visible>
+	<TransparentInput>false</TransparentInput>
+	<PickChildrenOnly>true</PickChildrenOnly>
 </WidgetPanel>

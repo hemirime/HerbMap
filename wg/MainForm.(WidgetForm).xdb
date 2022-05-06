@@ -5,11 +5,13 @@
 	<Children>
 		<Item href="MiniMapPanel.(WidgetPanel).xdb" />
 		<Item href="MainPanel.(WidgetPanel).xdb" />
-		<Item href="ListPanel.(WidgetPanel).xdb" />
 		<Item href="res/btn/btn.(WidgetButton).xdb" />
 		<Item href="res/Tooltip/Tooltip.(WidgetPanel).xdb" />
+		<Item href="../Widgets/Checkbox/CheckboxTemplate.(WidgetButton).xdb" />
 		<Item href="../Widgets/Frame/FrameTemplate.(WidgetPanel).xdb" />
 		<Item href="../Widgets/StackTemplate.(WidgetPanel).xdb" />
+		<Item href="res/Button/bottom.(WidgetButton).xdb" />
+		<Item href="res/text/cfgtxt.(WidgetTextView).xdb" />
 	</Children>
 	<BackLayer href="" />
 	<Placement>

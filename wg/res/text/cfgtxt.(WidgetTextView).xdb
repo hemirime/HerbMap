@@ -30,4 +30,5 @@
 	</TextStyle>
 	<minWidth>100</minWidth>
 	<maxWidth>1200</maxWidth>
+	<Visible>false</Visible>
 </WidgetTextView>

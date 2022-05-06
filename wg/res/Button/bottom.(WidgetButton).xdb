@@ -19,7 +19,7 @@
 	<Variants>
 		<Item>
 			<TextFileRef href="B.txt" />
-			-- Подложка при наведении
+			-- пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 			<LayerHighlight href="BarBack.(WidgetLayerTiledTexture).xdb#xpointer(/WidgetLayerTiledTexture)" />
 			<PushedOffset x="-2" y="2" />
 			<StateNormal>
@@ -36,4 +36,5 @@
 	<TextStyle>
 		<Align>ALIGNY_MIDDLE</Align>
 	</TextStyle>
+	<Visible>false</Visible>
 </WidgetButton>

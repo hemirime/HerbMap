@@ -4,4 +4,6 @@
     <Priority>0</Priority>
     <BackLayer href="Textures/Container.(WidgetLayerTiledTexture).xdb" />
     <Visible>false</Visible>
+    <TransparentInput>false</TransparentInput>
+    <PickChildrenOnly>false</PickChildrenOnly>
 </WidgetPanel>

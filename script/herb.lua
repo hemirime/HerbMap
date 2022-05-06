@@ -47,16 +47,7 @@ local wtPointMini = {}
 local ShowMap = true
 local mapSystemNames = {}
 
--- чекКнопки для отображения информации
-local wtListPanel = mainForm:GetChildChecked("listpanel", false)
-local cB = wtListPanel:GetChildChecked("cbtn", false)
-cB:Show(false)
-local cBt = wtListPanel:GetChildChecked("cfgtxt", false)
-cBt:Show(false)
-local cBtn = {} -- с галочкой
-local sB = wtListPanel:GetChildChecked("bottom", false)
-sB:Show(false)
-local sBtn = {} -- просто кнопки
+local cBt = mainForm:GetChildChecked("cfgtxt", false)
 
 local wtPopup
 local PopupPointIndex
@@ -213,12 +204,10 @@ end
 function RefreshMapOverlay()
   if not MainMap:IsVisibleEx() then
     wtMainPanel:Show(false)
-    wtListPanel:Show(false)
     return
   end
 
   wtMainPanel:Show(ShowMap)
-  wtListPanel:Show(true)
 
   local placement = MainMap:GetPlacementPlain()
   wtMainPanel:SetPlacementPlain(placement)
@@ -266,50 +255,40 @@ function OnCreate()
   LoadPoints()
   MigrateData()
 
-  MainMap:AddChild(wtListPanel)
   CheckMiniMapScale()
 
-  local txt = {}
-  PosXY(wtListPanel, 100, 200, 50, 20 * 5 + 55)
-  for i = 1, 2 do -- с галочкой
-    cBtn[i] = mainForm:CreateWidgetByDesc(cB:GetWidgetDesc())
-    cBtn[i]:SetName("cBtn" .. i)
-    wtListPanel:AddChild(cBtn[i])
-    PosXY(cBtn[i], 15, 20, 20 * i, 20)
-    cBtn[i]:Show(true)
-    txt[i] = mainForm:CreateWidgetByDesc(cBt:GetWidgetDesc())
-    txt[i]:SetName("cTxt" .. i)
-    wtListPanel:AddChild(txt[i])
-    PosXY(txt[i], 15 + 20, 150, 20 * i, 20)
-    txt[i]:Show(true)
-    txt[i]:SetVal("Name", userMods.ToWString(NameCBtn[i]))
-  end
-  for i = 1, 3 do -- просто кнопки
-    sBtn[i] = mainForm:CreateWidgetByDesc(sB:GetWidgetDesc())
-    sBtn[i]:SetName("sBtn" .. i)
-    wtListPanel:AddChild(sBtn[i])
-    PosXY(sBtn[i], 15, 150, 20 * i + 40, 20)
-    sBtn[i]:SetVal("Name", userMods.ToWString(NameBtn[i]))
-    sBtn[i]:Show(true)
-  end
-  if Settings.ShowPoints.HERB then
-    cBtn[1]:SetVariant(1)
-  else
-    cBtn[1]:SetVariant(0)
-  end
-  if Settings.ShowPoints.ORE then
-    cBtn[2]:SetVariant(1)
-  else
-    cBtn[2]:SetVariant(0)
-  end
+  local wtSettings = Frame("HM:Settings",
+      VStack(2, { all = 12 }, WIDGET_ALIGN_LOW) {
+        Repeat(2, function(index)
+          return HStack(2, nil, WIDGET_ALIGN_CENTER) {
+            Checkbox("cBtn" .. index, index == 1 and Settings.ShowPoints.HERB or Settings.ShowPoints.ORE),
+            function()
+              local label = mainForm:CreateWidgetByDesc(cBt:GetWidgetDesc())
+              label:SetName("cTxt" .. index)
+              SetSize(label, 128, 20)
+              label:Show(true)
+              label:SetVal("Name", userMods.ToWString(NameCBtn[index]))
+              return label
+            end,
+          }
+        end
+        ),
+        Repeat(3, function(index)
+          local btn = Button("sBtn" .. index, userMods.ToWString(NameBtn[index]))
+          SetSize(btn, 150, 20)
+          return btn
+        end
+        )
+      }
+  )
+  wtSettings:SetPriority(2)
+  MainMap:AddChild(wtSettings)
+  DnD:Init(wtSettings, wtSettings, true, true)
 
   wtPopup = Frame("Popup",
       VStack(2, { all = 12 }, WIDGET_ALIGN_LOW) {
         Repeat(2, function(index)
-          local btn = mainForm:CreateWidgetByDesc(sB:GetWidgetDesc())
-          btn:SetName("PopupBtn" .. index)
-          btn:SetVal("Name", userMods.ToWString(NameTT[index]))
-          btn:Show(true)
+          local btn = Button("PopupBtn" .. index, userMods.ToWString(NameTT[index]))
           SetSize(btn, 100, 20)
           return btn
         end
@@ -546,27 +525,19 @@ function DeletePoint(index)
   SavePoints()
 end
 
--- click_cbtn
+-- on_checkbox_clicked
 function OnCheckboxClicked(params)
   if DnD:IsDragging() then return end
 
-  local widgetName = params.widget:GetName()
+  local sender = params.widget
+  sender:SetVariant(sender:GetVariant() == 1 and 0 or 1)
 
-  function ToggleCheckbox(index)
-    if cBtn[index]:GetVariant() == 1 then
-      cBtn[index]:SetVariant(0) -- [ ]
-      return false
-    else
-      cBtn[index]:SetVariant(1) -- [x]
-      return true
-    end
-  end
-
-  if widgetName == "cBtn1" then
-    Settings.ShowPoints.HERB = ToggleCheckbox(1)
+  local senderName = sender:GetName()
+  if senderName == "cBtn1" then
+    Settings.ShowPoints.HERB = sender:GetVariant() == 1
     RenderMapPoints()
-  elseif widgetName == "cBtn2" then
-    Settings.ShowPoints.ORE = ToggleCheckbox(2)
+  elseif senderName == "cBtn2" then
+    Settings.ShowPoints.ORE = sender:GetVariant() == 1
     RenderMapPoints()
   end
 end
@@ -606,8 +577,6 @@ end
 -- INITIALIZATION
 --------------------------------------------------------------------------------
 function Init()
-  DnD:Init(357, wtListPanel, wtListPanel, true, true, { -8, -8, -8, -8 })
-
   if avatar.IsExist() then
     OnCreate()
   else
@@ -615,7 +584,7 @@ function Init()
   end
 
   common.RegisterReactionHandler(OnButtonClicked, "ReactionBottom")
-  common.RegisterReactionHandler(OnCheckboxClicked, "click_cbtn")
+  common.RegisterReactionHandler(OnCheckboxClicked, "on_checkbox_clicked")
   common.RegisterReactionHandler(ShowTooltip, "mouse_over")
   common.RegisterReactionHandler(ShowPopup, "object_right_click")
 end
