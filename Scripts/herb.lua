@@ -34,9 +34,6 @@ local IsTimerEventRegistered = false
 local wtMainPanel = mainForm:GetChildChecked("MainPanel", false)
 local wtMiniMapPanel = mainForm:GetChildChecked("MiniMapPanel", false)
 
-local wtTooltip = mainForm:GetChildChecked("Tooltip", false)
-local wtTooltipText = wtTooltip:GetChildChecked("TooltipText", false)
-
 local wtBtn = mainForm:GetChildChecked("btn", false)
 
 local points = {}
@@ -47,7 +44,8 @@ local wtPointMini = {}
 local ShowMap = true
 local mapSystemNames = {}
 
-local cBt = mainForm:GetChildChecked("cfgtxt", false)
+local wtTooltip
+local wtTooltipText
 
 local wtPopup
 local PopupPointIndex
@@ -257,44 +255,64 @@ function OnCreate()
 
   CheckMiniMapScale()
 
-  local wtSettings = Frame("HM:Settings",
-      VStack(2, { all = 12 }, WIDGET_ALIGN_LOW) {
-        Repeat(2, function(index)
-          return HStack(2, nil, WIDGET_ALIGN_CENTER) {
-            Checkbox("cBtn" .. index, index == 1 and Settings.ShowPoints.HERB or Settings.ShowPoints.ORE),
-            function()
-              local label = mainForm:CreateWidgetByDesc(cBt:GetWidgetDesc())
-              label:SetName("cTxt" .. index)
-              SetSize(label, 128, 20)
-              label:Show(true)
-              label:SetVal("Name", userMods.ToWString(NameCBtn[index]))
-              return label
-            end,
+  local wtSettings = Frame "HM:Settings" {
+    edges = { all = 12 },
+    content = VStack {
+      spacing = 2,
+      gravity = WIDGET_ALIGN_LOW,
+      children = {
+        HStack {
+          spacing = 2,
+          gravity = WIDGET_ALIGN_CENTER,
+          children = {
+            Checkbox "cBtn1" { isChecked = Settings.ShowPoints.HERB },
+            Label { text = userMods.ToWString(NameCBtn[1]), style = "tip_green", fontSize = 12 }
           }
-        end
-        ),
+        },
+        HStack {
+          spacing = 2,
+          gravity = WIDGET_ALIGN_CENTER,
+          children = {
+            Checkbox "cBtn2" { isChecked = Settings.ShowPoints.ORE },
+            Label { text = userMods.ToWString(NameCBtn[2]), style = "tip_blue", fontSize = 12 }
+          }
+        },
         Repeat(3, function(index)
-          local btn = Button("sBtn" .. index, userMods.ToWString(NameBtn[index]))
+          local btn = Button("sBtn" .. index) { title = userMods.ToWString(NameBtn[index]) }
           SetSize(btn, 150, 20)
           return btn
-        end
-        )
+        end)
       }
-  )
+    }
+  }
   wtSettings:SetPriority(2)
   MainMap:AddChild(wtSettings)
   DnD:Init(wtSettings, wtSettings, true, true)
 
-  wtPopup = Frame("Popup",
-      VStack(2, { all = 12 }, WIDGET_ALIGN_LOW) {
+  wtTooltip = Frame "Tooltip" {
+    edges = { all = 12 },
+    content = function()
+      wtTooltipText = Label { text = "" }
+      return wtTooltipText
+    end
+  }
+  wtTooltip:SetPriority(11240)
+  wtTooltip:Show(false)
+
+  wtPopup = Frame "Popup" {
+    content = VStack {
+      spacing = 2,
+      edges = { all = 12 },
+      gravity = WIDGET_ALIGN_LOW,
+      children = {
         Repeat(2, function(index)
-          local btn = Button("PopupBtn" .. index, userMods.ToWString(NameTT[index]))
+          local btn = Button("PopupBtn" .. index) { title = userMods.ToWString(NameTT[index]) }
           SetSize(btn, 100, 20)
           return btn
-        end
-        )
+        end)
       }
-  )
+    }
+  }
   wtPopup:Show(false)
 
   local mapRoot = stateMainForm:GetChildChecked("Map", false)
@@ -547,10 +565,9 @@ function ShowTooltip(params)
   if params.active then
     local index = tonumber(string.sub(params.sender, 8))
     local pointName = points[index].NAME
-    wtTooltipText:SetClassVal("style", "tip_white")
-    wtTooltipText:SetVal("Name", pointName)
-    PosTooltip(wtTooltip, params.widget)
+    wtTooltipText:SetVal("Text", pointName)
     wtTooltip:Show(true)
+    PosTooltip(wtTooltip, params.widget)
   else
     wtTooltip:Show(false)
   end
@@ -563,14 +580,14 @@ function PosTooltip(tooltip, anchorWidget)
   local anchorRect = anchorWidget:GetRealRect()
   local posX = anchorRect.x1 - tooltipWidth - 2
   local posY = anchorRect.y1
-  PosXY(tooltip, posX, nil, posY)
+  PosXY(tooltip, posX, nil, posY, nil, WIDGET_ALIGN_LOW_ABS, WIDGET_ALIGN_LOW_ABS)
 end
 
 function ShowPopup(params)
   PopupPointIndex = tonumber(string.sub(params.sender, 8))
   local rect = params.widget:GetRealRect()
-  PosXY(wtPopup, rect.x1, nil, rect.y1, nil, WIDGET_ALIGN_LOW_ABS, WIDGET_ALIGN_LOW_ABS)
   wtPopup:Show(true)
+  PosXY(wtPopup, rect.x1, nil, rect.y1, nil, WIDGET_ALIGN_LOW_ABS, WIDGET_ALIGN_LOW_ABS)
 end
 
 --------------------------------------------------------------------------------

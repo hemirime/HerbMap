@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<WidgetTextView>
+	<Name>LabelTemplate</Name>
+	<Priority>0</Priority>
+	<Placement>
+		<X>
+			<Sizing>WIDGET_SIZING_INTERNAL</Sizing>
+		</X>
+		<Y>
+			<Sizing>WIDGET_SIZING_INTERNAL</Sizing>
+		</Y>
+	</Placement>
+	<Visible>false</Visible>
+	<Enabled>true</Enabled>
+	<TransparentInput>true</TransparentInput>
+	<FormatFileRef href="LabelFormat.txt" />
+	<TextValues />
+	<TextStyle>
+		<wrapText>false</wrapText>
+		<showClippedSymbol>false</showClippedSymbol>
+		<ellipsis>false</ellipsis>
+	</TextStyle>
+	<minWidth>0</minWidth>
+	<maxWidth>0</maxWidth>
+</WidgetTextView>

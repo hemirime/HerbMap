@@ -7,6 +7,7 @@ local stackDesc = mainForm:GetChildChecked("StackTemplate", false):GetWidgetDesc
 local frameDesc = mainForm:GetChildChecked("FrameTemplate", false):GetWidgetDesc()
 local checkBoxDesc = mainForm:GetChildChecked("CheckboxTemplate", false):GetWidgetDesc()
 local buttonDesc = mainForm:GetChildChecked("bottom", false):GetWidgetDesc()
+local labelDesc = mainForm:GetChildChecked("LabelTemplate", false):GetWidgetDesc()
 
 function PosXY(wt, posX, sizeX, posY, sizeY, alignX, alignY)
   local placement = wt:GetPlacementPlain()
@@ -43,62 +44,111 @@ function Repeat(count, block)
   return items
 end
 
-function Frame(name, content)
-  local frame = mainForm:CreateWidgetByDesc(frameDesc)
-  frame:SetName(name)
-  frame:AddChild(content)
-  local placement = content:GetPlacementPlain()
-  SetSize(frame, placement.sizeX, placement.sizeY)
-  frame:Show(true)
-  return frame, content
-end
+local FrameContents = {}
 
-function Checkbox(name, isChecked)
-  local checkbox = mainForm:CreateWidgetByDesc(checkBoxDesc)
-  checkbox:SetName(name)
-  checkbox:SetVariant(isChecked and 1 or 0)
-  checkbox:Show(true)
-  return checkbox
-end
+---@param name string @widget name
+---@param args table @with fields { edges, content }
+function Frame(name)
+  return function(args)
+    local content = UI.Unwrap(args.content)
+    local left, top, _, _ = UI.Edges(args.edges)
 
-function Button(name, title)
-  local button = mainForm:CreateWidgetByDesc(buttonDesc)
-  button:SetName(name)
-  button:SetVal("Name", title)
-  button:Show(true)
-  return button
-end
+    local frame = mainForm:CreateWidgetByDesc(frameDesc)
+    frame:SetName(name)
+    frame:AddChild(content)
+    SetPos(content, left, top, WIDGET_ALIGN_LOW, WIDGET_ALIGN_LOW)
 
-function HStack(spacing, edges, gravity)
-  return function(children)
-    local left, top, right, bottom = UI.Edges(edges)
-
-    local stack, maxSize, x = UI.Stack(
-        UI.Flatten(children),
-        left, top,
-        function(index, placement)
-          return { before = index > 1 and spacing or 0, after = placement.sizeX }, { before = 0, after = 0 }, WIDGET_ALIGN_LOW, gravity, placement.sizeY
-        end
-    )
-    SetSize(stack, x + right, top + maxSize + bottom)
-    return stack
+    local frameId = common.RequestIntegerByInstanceId(frame:GetInstanceId())
+    FrameContents[frameId] = {
+      content = content,
+      edges = args.edges
+    }
+    RegisterShowListener(frame)
+    frame:Show(true)
+    return frame, content
   end
 end
 
-function VStack(spacing, edges, gravity)
-  return function(children)
-    local left, top, right, bottom = UI.Edges(edges)
-
-    local stack, maxSize, _, y = UI.Stack(
-        UI.Flatten(children),
-        left, top,
-        function(index, placement)
-          return { before = 0, after = 0 }, { before = index > 1 and spacing or 0, after = placement.sizeY }, gravity, WIDGET_ALIGN_LOW, placement.sizeX
-        end
-    )
-    SetSize(stack, left + maxSize + right, y + bottom)
-    return stack
+function RegisterShowListener(frame)
+  local mt = getmetatable(frame)
+  if mt._HM_Show then
+    return
   end
+  mt._HM_Show = mt.Show
+  mt.Show = function(self, show)
+    self:_HM_Show(show)
+    local widgetId = common.RequestIntegerByInstanceId(self:GetInstanceId())
+    local frameData = FrameContents[widgetId]
+    if show and frameData then
+      local placement = frameData.content:GetPlacementPlain()
+      local left, top, right, bottom = UI.Edges(frameData.edges)
+      SetSize(self, left + placement.sizeX + right, top + placement.sizeY + bottom)
+    end
+  end
+end
+
+---@param name string @widget name
+---@param args table @with fields { isChecked }
+function Checkbox(name)
+  return function(args)
+    local checkbox = mainForm:CreateWidgetByDesc(checkBoxDesc)
+    checkbox:SetName(name)
+    checkbox:SetVariant(args.isChecked and 1 or 0)
+    checkbox:Show(true)
+    return checkbox
+  end
+end
+
+---@param name string @widget name
+---@param args table @with fields { title }
+function Button(name)
+  return function(args)
+    local button = mainForm:CreateWidgetByDesc(buttonDesc)
+    button:SetName(name)
+    button:SetVal("Name", args.title)
+    button:Show(true)
+    return button
+  end
+end
+
+---@param args table @with fields { text, style, fontSize }
+function Label(args)
+  local label = mainForm:CreateWidgetByDesc(labelDesc)
+  label:SetVal("Text", args.text)
+  label:SetClassVal("Style", args.style or "tip_white")
+  label:SetClassVal("FontSize", "Size" .. (args.fontSize or 14))
+  label:Show(true)
+  return label
+end
+
+---@param args table @with fields { edges, spacing, gravity, children }
+function HStack(args)
+  local left, top, right, bottom = UI.Edges(args.edges)
+
+  local stack, maxSize, x = UI.Stack(
+      UI.Unwrap(args.children),
+      left, top,
+      function(index, placement)
+        return { before = index > 1 and args.spacing or 0, after = placement.sizeX }, { before = 0, after = 0 }, WIDGET_ALIGN_LOW, args.gravity, placement.sizeY
+      end
+  )
+  SetSize(stack, x + right, top + maxSize + bottom)
+  return stack
+end
+
+---@param args table @with fields { edges, spacing, gravity, children }
+function VStack(args)
+  local left, top, right, bottom = UI.Edges(args.edges)
+
+  local stack, maxSize, _, y = UI.Stack(
+      UI.Unwrap(args.children),
+      left, top,
+      function(index, placement)
+        return { before = 0, after = 0 }, { before = index > 1 and args.spacing or 0, after = placement.sizeY }, args.gravity, WIDGET_ALIGN_LOW, placement.sizeX
+      end
+  )
+  SetSize(stack, left + maxSize + right, y + bottom)
+  return stack
 end
 
 function UI.Edges(edges)
@@ -134,6 +184,16 @@ function UI.Stack(children, startX, startY, axisProperties)
   end
   stack:Show(true)
   return stack, maxSize, x, y
+end
+
+function UI.Unwrap(item)
+  if type(item) == 'function' then
+    return item()
+  elseif type(item) == 'table' then
+    return UI.Flatten(item)
+  else
+    return item
+  end
 end
 
 function UI.Flatten(item, result)
