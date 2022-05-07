@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <WidgetPanel>
-	<Name>MainPanel</Name>
-	<Priority>9000</Priority>
+	<Name>HM:MapPanel</Name>
+	<Priority>2</Priority>
 	<Placement>
 		<X>
 			<Align>WIDGET_ALIGN_CENTER</Align>

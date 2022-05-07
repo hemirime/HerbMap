@@ -11,6 +11,6 @@
 	<disableLODControl>false</disableLODControl>
 	<alphaTex>true</alphaTex>
 	<binaryFileSize>763</binaryFileSize>
-	<binaryFile href="ObjectButtonHighlightTexture.(UITexture).bin" />
+	<binaryFile href="PinHighlight.(UITexture).bin" />
 	<wrap>false</wrap>
 </UITexture>

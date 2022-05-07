@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <WidgetPanel>
-	<Name>MiniMapPanel</Name>
-	<Priority>9000</Priority>
+	<Name>HM:MiniMapPanel</Name>
+	<Priority>2</Priority>
 	<Placement>
 		<X>
 			<Align>WIDGET_ALIGN_BOTH</Align>

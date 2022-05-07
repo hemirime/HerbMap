@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<WidgetButton>
+	<Name>PinTemplate</Name>
+	<Priority>0</Priority>
+	<BackLayer href="Textures/LayerTexture.(WidgetLayerSimpleTexture).xdb"/>
+	<FrontLayer href="" />
+	<Placement>
+		<X>
+			<Size>15</Size>
+		</X>
+		<Y>
+			<Size>20</Size>
+		</Y>
+	</Placement>
+	<Enabled>true</Enabled>
+	<Visible>false</Visible>
+	<IgnoreDblClick>false</IgnoreDblClick>
+	<TransparentInput>false</TransparentInput>
+	<Variants>
+		<Item>
+			<LayerHighlight href="Textures/PinHighlight.(WidgetLayerSimpleTexture).xdb" />
+			<ReactionOnUp>true</ReactionOnUp>
+			<ReactionRightClick>pin_right_click</ReactionRightClick>
+		</Item>
+	</Variants>
+	<reactionOnPointing>pin_mouse_over</reactionOnPointing>
+</WidgetButton>

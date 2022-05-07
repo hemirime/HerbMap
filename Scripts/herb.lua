@@ -23,6 +23,22 @@ local MainMapLabel = MainMap:GetChildChecked("Texts", false):GetChildChecked("Ma
 local MiniMap = stateMainForm:GetChildChecked("Minimap", false)
 local SquareMiniMap = GetMiniMapWidget(MiniMap, "Square")
 local CircleMiniMap = GetMiniMapWidget(MiniMap, "Circle")
+--------------------------------------------------------------------------------
+local wtMainPanel = mainForm:GetChildChecked("HM:MapPanel", false)
+local wtMiniMapPanel = mainForm:GetChildChecked("HM:MiniMapPanel", false)
+
+local pinDesc = mainForm:GetChildChecked("PinTemplate", false):GetWidgetDesc()
+
+local wtTooltip
+local wtTooltipText
+
+local wtPopup
+local PopupPointIndex
+
+local wtPoint = {}
+local wtPointMini = {}
+--------------------------------------------------------------------------------
+local points = {}
 
 local miniMapInfo = {
   Name = nil,
@@ -31,24 +47,8 @@ local miniMapInfo = {
 
 local IsTimerEventRegistered = false
 
-local wtMainPanel = mainForm:GetChildChecked("MainPanel", false)
-local wtMiniMapPanel = mainForm:GetChildChecked("MiniMapPanel", false)
-
-local wtBtn = mainForm:GetChildChecked("btn", false)
-
-local points = {}
-
-local wtPoint = {}
-local wtPointMini = {}
-
 local ShowMap = true
 local mapSystemNames = {}
-
-local wtTooltip
-local wtTooltipText
-
-local wtPopup
-local PopupPointIndex
 --------------------------------------------------------------------------------
 -- HELPERS
 --------------------------------------------------------------------------------
@@ -177,7 +177,7 @@ function RenderPoints(mapSize, geodata, mapSysName, container, parent)
       if container[i] then
         container[i]:Show(isPinVisible)
       else
-        container[i] = mainForm:CreateWidgetByDesc(wtBtn:GetWidgetDesc())
+        container[i] = mainForm:CreateWidgetByDesc(pinDesc)
         container[i]:SetName("wtPoint" .. i)
         container[i]:Show(isPinVisible)
         parent:AddChild(container[i])
@@ -285,7 +285,7 @@ function OnCreate()
       }
     }
   }
-  wtSettings:SetPriority(2)
+  wtSettings:SetPriority(3)
   MainMap:AddChild(wtSettings)
   DnD:Init(wtSettings, wtSettings, true, true)
 
@@ -300,9 +300,9 @@ function OnCreate()
   wtTooltip:Show(false)
 
   wtPopup = Frame "Popup" {
+    edges = { all = 12 },
     content = VStack {
       spacing = 2,
-      edges = { all = 12 },
       gravity = WIDGET_ALIGN_LOW,
       children = {
         Repeat(2, function(index)
@@ -560,7 +560,7 @@ function OnCheckboxClicked(params)
   end
 end
 
--- mouse_over
+-- pin_mouse_over
 function ShowTooltip(params)
   if params.active then
     local index = tonumber(string.sub(params.sender, 8))
@@ -583,6 +583,7 @@ function PosTooltip(tooltip, anchorWidget)
   PosXY(tooltip, posX, nil, posY, nil, WIDGET_ALIGN_LOW_ABS, WIDGET_ALIGN_LOW_ABS)
 end
 
+-- pin_right_click
 function ShowPopup(params)
   PopupPointIndex = tonumber(string.sub(params.sender, 8))
   local rect = params.widget:GetRealRect()
@@ -602,8 +603,8 @@ function Init()
 
   common.RegisterReactionHandler(OnButtonClicked, "ReactionBottom")
   common.RegisterReactionHandler(OnCheckboxClicked, "on_checkbox_clicked")
-  common.RegisterReactionHandler(ShowTooltip, "mouse_over")
-  common.RegisterReactionHandler(ShowPopup, "object_right_click")
+  common.RegisterReactionHandler(ShowTooltip, "pin_mouse_over")
+  common.RegisterReactionHandler(ShowPopup, "pin_right_click")
 end
 
 --------------------------------------------------------------------------------
