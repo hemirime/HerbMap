@@ -33,7 +33,14 @@ local wtTooltip
 local wtTooltipText
 
 local wtPopup
+local wtPopupText
+local PopupMinWidth
 local PopupPointIndex
+
+local TextColors = {
+  GORN = "tip_blue",
+  HERB = "tip_green"
+}
 
 local wtPoint = {}
 local wtPointMini = {}
@@ -261,12 +268,13 @@ function OnCreate()
       spacing = 2,
       gravity = WIDGET_ALIGN_LOW,
       children = {
+        Label { text = "HerbMap", fontSize = 11 },
         HStack {
           spacing = 2,
           gravity = WIDGET_ALIGN_CENTER,
           children = {
             Checkbox "cBtn1" { isChecked = Settings.ShowPoints.HERB },
-            Label { text = userMods.ToWString(NameCBtn[1]), style = "tip_green", fontSize = 12 }
+            Label { text = userMods.ToWString(NameCBtn[1]), style = TextColors['HERB'], fontSize = 12 }
           }
         },
         HStack {
@@ -274,7 +282,7 @@ function OnCreate()
           gravity = WIDGET_ALIGN_CENTER,
           children = {
             Checkbox "cBtn2" { isChecked = Settings.ShowPoints.ORE },
-            Label { text = userMods.ToWString(NameCBtn[2]), style = "tip_blue", fontSize = 12 }
+            Label { text = userMods.ToWString(NameCBtn[2]), style = TextColors['GORN'], fontSize = 12 }
           }
         },
         Repeat(3, function(index)
@@ -301,17 +309,25 @@ function OnCreate()
 
   wtPopup = Frame "Popup" {
     edges = { all = 12 },
-    content = VStack {
-      spacing = 2,
-      gravity = WIDGET_ALIGN_LOW,
-      children = {
-        Repeat(2, function(index)
-          local btn = Button("PopupBtn" .. index) { title = userMods.ToWString(NameTT[index]) }
-          SetSize(btn, 100, 20)
-          return btn
-        end)
+    content = function()
+      local stack = VStack {
+        spacing = 2,
+        gravity = WIDGET_ALIGN_LOW,
+        children = {
+          function()
+            wtPopupText = Label { text = "", fontSize = 13 }
+            return wtPopupText
+          end,
+          Repeat(2, function(index)
+            local btn = Button("PopupBtn" .. index) { title = userMods.ToWString(NameTT[index]) }
+            SetSize(btn, 100, 20)
+            return btn
+          end)
+        }
       }
-    }
+      PopupMinWidth = stack:GetPlacementPlain().sizeX
+      return stack
+    end
   }
   wtPopup:Show(false)
 
@@ -564,8 +580,9 @@ end
 function ShowTooltip(params)
   if params.active then
     local index = tonumber(string.sub(params.sender, 8))
-    local pointName = points[index].NAME
-    wtTooltipText:SetVal("Text", pointName)
+    local point = points[index]
+    wtTooltipText:SetVal("Text", point.NAME)
+    wtTooltipText:SetClassVal("Style", TextColors[point.ICON] or "tip_white")
     wtTooltip:Show(true)
     PosTooltip(wtTooltip, params.widget)
   else
@@ -586,9 +603,20 @@ end
 -- pin_right_click
 function ShowPopup(params)
   PopupPointIndex = tonumber(string.sub(params.sender, 8))
-  local rect = params.widget:GetRealRect()
+  local point = points[PopupPointIndex]
+  wtPopupText:SetVal("Text", point.NAME)
+  wtPopupText:SetClassVal("Style", TextColors[point.ICON] or "tip_white")
+
+  -- update popup size
+  local labelWidth = wtPopupText:GetPlacementPlain().sizeX
+  local width = labelWidth > PopupMinWidth and labelWidth or PopupMinWidth
+  for _, w in pairs(wtPopupText:GetParent():GetNamedChildren()) do
+    SetSize(w, width)
+  end
+  SetSize(wtPopupText:GetParent(), width)
+
   wtPopup:Show(true)
-  PosXY(wtPopup, rect.x1, nil, rect.y1, nil, WIDGET_ALIGN_LOW_ABS, WIDGET_ALIGN_LOW_ABS)
+  PosXY(wtPopup, params.x, nil, params.y, nil, WIDGET_ALIGN_LOW_ABS, WIDGET_ALIGN_LOW_ABS)
 end
 
 --------------------------------------------------------------------------------

@@ -31,8 +31,8 @@ end
 
 function SetSize(wt, sizeX, sizeY)
   local placement = wt:GetPlacementPlain()
-  placement.sizeX = sizeX
-  placement.sizeY = sizeY
+  if sizeX then placement.sizeX = sizeX end
+  if sizeY then placement.sizeY = sizeY end
   wt:SetPlacementPlain(placement)
 end
 
