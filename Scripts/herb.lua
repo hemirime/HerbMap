@@ -256,6 +256,7 @@ end
 
 -- EVENT_AVATAR_CREATED
 function OnCreate()
+  UI:Init()
   LoadMapsDictionary()
   LoadPoints()
   MigrateData()
@@ -273,7 +274,13 @@ function OnCreate()
           spacing = 2,
           gravity = WIDGET_ALIGN_CENTER,
           children = {
-            Checkbox "cBtn1" { isChecked = Settings.ShowPoints.HERB },
+            Checkbox {
+              isChecked = Settings.ShowPoints.HERB,
+              onChecked = function(isChecked)
+                Settings.ShowPoints.HERB = isChecked
+                RenderMapPoints()
+              end
+            },
             Label { text = userMods.ToWString(NameCBtn[1]), style = TextColors['HERB'], fontSize = 12 }
           }
         },
@@ -281,15 +288,33 @@ function OnCreate()
           spacing = 2,
           gravity = WIDGET_ALIGN_CENTER,
           children = {
-            Checkbox "cBtn2" { isChecked = Settings.ShowPoints.ORE },
+            Checkbox {
+              isChecked = Settings.ShowPoints.ORE,
+              onChecked = function(isChecked)
+                Settings.ShowPoints.ORE = isChecked
+                RenderMapPoints()
+              end
+            },
             Label { text = userMods.ToWString(NameCBtn[2]), style = TextColors['GORN'], fontSize = 12 }
           }
         },
-        Repeat(3, function(index)
-          local btn = Button("sBtn" .. index) { title = userMods.ToWString(NameBtn[index]) }
-          SetSize(btn, 150, 20)
-          return btn
-        end)
+        Button {
+          title = userMods.ToWString(NameBtn[1]),
+          sizeX = 150, sizeY = 20,
+          onClicked = ToggleMapOverlayVisibility
+        },
+        Button {
+          title = userMods.ToWString(NameBtn[2]),
+          sizeX = 150, sizeY = 20,
+          onClicked = function()
+            DeleteAllPointsOnMap(mapSystemNames[SelectedMapName()])
+          end
+        },
+        Button {
+          title = userMods.ToWString(NameBtn[3]),
+          sizeX = 150, sizeY = 20,
+          onClicked = DeleteAllPoints
+        }
       }
     }
   }
@@ -307,6 +332,7 @@ function OnCreate()
   wtTooltip:SetPriority(11240)
   wtTooltip:Show(false)
 
+  wtPopupText = Label { text = "", fontSize = 13 }
   wtPopup = Frame "Popup" {
     edges = { all = 12 },
     content = function()
@@ -314,15 +340,23 @@ function OnCreate()
         spacing = 2,
         gravity = WIDGET_ALIGN_LOW,
         children = {
-          function()
-            wtPopupText = Label { text = "", fontSize = 13 }
-            return wtPopupText
-          end,
-          Repeat(2, function(index)
-            local btn = Button("PopupBtn" .. index) { title = userMods.ToWString(NameTT[index]) }
-            SetSize(btn, 100, 20)
-            return btn
-          end)
+          wtPopupText,
+          Button {
+            title = userMods.ToWString(NameTT[1]),
+            sizeX = 100, sizeY = 20,
+            onClicked = function()
+              DeletePoint(PopupPointIndex)
+              PopupPointIndex = nil
+              wtPopup:Show(false)
+            end
+          },
+          Button {
+            title = userMods.ToWString(NameTT[2]),
+            sizeX = 100, sizeY = 20,
+            onClicked = function()
+              wtPopup:Show(false)
+            end
+          }
         }
       }
       PopupMinWidth = stack:GetPlacementPlain().sizeX
@@ -465,26 +499,6 @@ end
 -- REACTION HANDLERS
 --------------------------------------------------------------------------------
 
--- ReactionBottom
-function OnButtonClicked(param)
-  if DnD:IsDragging() then return end
-
-  local widgetName = param.widget:GetName()
-  if widgetName == "sBtn1" then
-    ToggleMapOverlayVisibility()
-  elseif widgetName == "sBtn2" then
-    DeleteAllPointsOnMap(mapSystemNames[SelectedMapName()])
-  elseif widgetName == "sBtn3" then
-    DeleteAllPoints()
-  elseif widgetName == "PopupBtn1" then
-    DeletePoint(PopupPointIndex)
-    PopupPointIndex = nil
-    wtPopup:Show(false)
-  elseif widgetName == "PopupBtn2" then
-    wtPopup:Show(false)
-  end
-end
-
 function ToggleMapOverlayVisibility()
   Log("Скрыть/Показать точки на карте")
   ShowMap = not ShowMap
@@ -559,23 +573,6 @@ function DeletePoint(index)
   SavePoints()
 end
 
--- on_checkbox_clicked
-function OnCheckboxClicked(params)
-  if DnD:IsDragging() then return end
-
-  local sender = params.widget
-  sender:SetVariant(sender:GetVariant() == 1 and 0 or 1)
-
-  local senderName = sender:GetName()
-  if senderName == "cBtn1" then
-    Settings.ShowPoints.HERB = sender:GetVariant() == 1
-    RenderMapPoints()
-  elseif senderName == "cBtn2" then
-    Settings.ShowPoints.ORE = sender:GetVariant() == 1
-    RenderMapPoints()
-  end
-end
-
 -- pin_mouse_over
 function ShowTooltip(params)
   if params.active then
@@ -629,8 +626,6 @@ function Init()
     common.RegisterEventHandler(OnCreate, "EVENT_AVATAR_CREATED")
   end
 
-  common.RegisterReactionHandler(OnButtonClicked, "ReactionBottom")
-  common.RegisterReactionHandler(OnCheckboxClicked, "on_checkbox_clicked")
   common.RegisterReactionHandler(ShowTooltip, "pin_mouse_over")
   common.RegisterReactionHandler(ShowPopup, "pin_right_click")
 end

@@ -1,13 +1,25 @@
 --- UI module
 -- @module UI
 
-local UI = {}
+Global("UI", {})
 
 local stackDesc = mainForm:GetChildChecked("StackTemplate", false):GetWidgetDesc()
 local frameDesc = mainForm:GetChildChecked("FrameTemplate", false):GetWidgetDesc()
 local checkBoxDesc = mainForm:GetChildChecked("CheckboxTemplate", false):GetWidgetDesc()
 local buttonDesc = mainForm:GetChildChecked("bottom", false):GetWidgetDesc()
 local labelDesc = mainForm:GetChildChecked("LabelTemplate", false):GetWidgetDesc()
+
+local CheckboxCallbacks = {}
+local ButtonCallbacks = {}
+
+function UI:Init()
+  common.RegisterReactionHandler(UI.OnCheckboxClicked, "on_checkbox_clicked")
+  common.RegisterReactionHandler(UI.OnButtonClicked, "ReactionBottom")
+end
+
+function WidgetID(widget)
+  return common.RequestIntegerByInstanceId(widget:GetInstanceId())
+end
 
 function PosXY(wt, posX, sizeX, posY, sizeY, alignX, alignY)
   local placement = wt:GetPlacementPlain()
@@ -58,8 +70,7 @@ function Frame(name)
     frame:AddChild(content)
     SetPos(content, left, top, WIDGET_ALIGN_LOW, WIDGET_ALIGN_LOW)
 
-    local frameId = common.RequestIntegerByInstanceId(frame:GetInstanceId())
-    FrameContents[frameId] = {
+    FrameContents[WidgetID(frame)] = {
       content = content,
       edges = args.edges
     }
@@ -77,8 +88,7 @@ function RegisterShowListener(frame)
   mt._HM_Show = mt.Show
   mt.Show = function(self, show)
     self:_HM_Show(show)
-    local widgetId = common.RequestIntegerByInstanceId(self:GetInstanceId())
-    local frameData = FrameContents[widgetId]
+    local frameData = FrameContents[WidgetID(self)]
     if show and frameData then
       local placement = frameData.content:GetPlacementPlain()
       local left, top, right, bottom = UI.Edges(frameData.edges)
@@ -87,28 +97,23 @@ function RegisterShowListener(frame)
   end
 end
 
----@param name string @widget name
----@param args table @with fields { isChecked }
-function Checkbox(name)
-  return function(args)
-    local checkbox = mainForm:CreateWidgetByDesc(checkBoxDesc)
-    checkbox:SetName(name)
-    checkbox:SetVariant(args.isChecked and 1 or 0)
-    checkbox:Show(true)
-    return checkbox
-  end
+---@param args table @with fields { isChecked, onChecked }
+function Checkbox(args)
+  local checkbox = mainForm:CreateWidgetByDesc(checkBoxDesc)
+  checkbox:SetVariant(args.isChecked and 1 or 0)
+  checkbox:Show(true)
+  CheckboxCallbacks[WidgetID(checkbox)] = args.onChecked
+  return checkbox
 end
 
----@param name string @widget name
----@param args table @with fields { title }
-function Button(name)
-  return function(args)
-    local button = mainForm:CreateWidgetByDesc(buttonDesc)
-    button:SetName(name)
-    button:SetVal("Name", args.title)
-    button:Show(true)
-    return button
-  end
+---@param args table @with fields { title, onClicked, sizeX, sizeY }
+function Button(args)
+  local button = mainForm:CreateWidgetByDesc(buttonDesc)
+  button:SetVal("Name", args.title)
+  button:Show(true)
+  ButtonCallbacks[WidgetID(button)] = args.onClicked
+  SetSize(button, args.sizeX, args.sizeY)
+  return button
 end
 
 ---@param args table @with fields { text, style, fontSize }
@@ -208,4 +213,32 @@ function UI.Flatten(item, result)
     arr[#arr + 1] = item
   end
   return arr
+end
+
+--------------------------------------------------------------------------------
+-- REACTION HANDLERS
+--------------------------------------------------------------------------------
+
+-- on_checkbox_clicked
+function UI.OnCheckboxClicked(params)
+  if DnD:IsDragging() then return end
+
+  local sender = params.widget
+  local wasChecked = sender:GetVariant() == 1
+  sender:SetVariant(wasChecked and 0 or 1)
+
+  local callback = CheckboxCallbacks[WidgetID(sender)]
+  if callback then
+    callback(not wasChecked)
+  end
+end
+
+-- ReactionBottom
+function UI.OnButtonClicked(params)
+  if DnD:IsDragging() then return end
+
+  local callback = ButtonCallbacks[WidgetID(params.widget)]
+  if callback then
+    callback()
+  end
 end
