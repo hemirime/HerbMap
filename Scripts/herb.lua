@@ -1,12 +1,3 @@
-local isDebugEnabled = true
-
-function Log(message)
-  if not isDebugEnabled then return end
-
-  common.LogInfo(common.GetAddonName(), message)
-  LogToChat(message)
-end
-
 function GetMiniMapWidget(parent, name)
   local widget = parent:GetChildChecked(name, false)
   return {
@@ -35,17 +26,22 @@ local wtTooltipText
 local wtPopup
 local wtPopupText
 local PopupMinWidth
-local PopupPointIndex
+local PopupPinName
 
 local TextColors = {
-  GORN = "tip_blue",
+  ORE = "tip_blue",
   HERB = "tip_green"
 }
 
 local wtPoint = {}
 local wtPointMini = {}
 --------------------------------------------------------------------------------
-local points = {}
+local CURRENT_DATA_VERSION = 1
+local data = {
+  Points = {
+  },
+  Version = 0
+}
 
 local miniMapInfo = {
   Name = nil,
@@ -78,22 +74,6 @@ function IsPointInCircle(point, center, radius)
   return dx^2 + dy^2 <= radius^2
 end
 
-function LoadPoints()
-  local loaded = userMods.GetGlobalConfigSection("HerbMap")
-  if not loaded then
-    return
-  end
-  points = loaded
-  Log(#points .. " точек загружено")
-end
-
-function SavePoints()
-  if points then
-    userMods.SetGlobalConfigSection("HerbMap", points)
-    Log(#points .." точек записано")
-  end
-end
-
 function LoadMapsDictionary()
   local zones = rules.GetZonesMaps()
   for _, zoneId in pairs(zones) do
@@ -102,37 +82,28 @@ function LoadMapsDictionary()
   end
 end
 
-function MigrateData()
-  Migration_1_2()
-  SavePoints()
-end
-
-function Migration_1_2()
-  function MapNameToSystemName(mapName)
-    local normalizedMapName = userMods.FromWString(mapName)
-    for name, sysName in pairs(mapSystemNames) do
-      if name == normalizedMapName then
-        return sysName
-      end
-    end
-    return mapName
+function LoadData()
+  local loaded = userMods.GetGlobalConfigSection("Data")
+  if not loaded then
+    return
   end
-
-  for i = 1, #points do
-    local mapName = points[i].MAP
-    if common.GetApiType(mapName) == "WString" then
-      points[i].MAP = MapNameToSystemName(mapName)
-    end
-  end
+  data = loaded
+  Log("Данные загружены, версия: " .. data.Version)
 end
 
-function SelectedMapName()
-  return userMods.FromWString(common.ExtractWStringFromValuedText(MainMapLabel:GetValuedText()))
+function SaveData()
+  data.Version = CURRENT_DATA_VERSION
+  userMods.SetGlobalConfigSection("Data", data)
+  Log("Данные сохранены, версия: " .. data.Version)
 end
 
-function SelectedMapID()
-  local sysName = mapSystemNames[SelectedMapName()]
-  return cartographer.GetZonesMapId(sysName)
+function GetCurrentMapSysName(avatarId)
+  return cartographer.GetZonesMapInfo(unit.GetZonesMapId(avatarId or avatar.GetId())).sysName
+end
+
+function GetSelectedMapSysName()
+  local localizedName = userMods.FromWString(common.ExtractWStringFromValuedText(MainMapLabel:GetValuedText()))
+  return mapSystemNames[localizedName]
 end
 
 function RenderMapPoints()
@@ -140,69 +111,67 @@ function RenderMapPoints()
     local markers = cartographer.GetMapMarkers(mapId)
     for _, markerId in pairs(markers) do
       local markerObjects = cartographer.GetMapMarkerObjects(mapId, markerId)
-      for _, data in pairs(markerObjects) do
-        if data.geodata then
-          return data.geodata
+      for _, d in pairs(markerObjects) do
+        if d.geodata then
+          return d.geodata
         end
       end
     end
   end
 
-  local geodata = FindGeodata(SelectedMapID())
-  if not geodata then
-    Log("Не удалось получить геодату для выбранной зоны: " .. SelectedMapName())
-    for _, wt in pairs(wtPoint) do
-      wt:Show(false)
-    end
-    return
-  end
+  local mapSysName = GetSelectedMapSysName()
+  local geodata = FindGeodata(cartographer.GetZonesMapId(mapSysName))
 
-  RenderPoints(wtMainPanel:GetPlacementPlain(), geodata, mapSystemNames[SelectedMapName()], wtPoint, wtMainPanel)
+  DestroyPins(wtPoint)
+  RenderPoints(wtMainPanel:GetPlacementPlain(), geodata, mapSysName, wtPoint, wtMainPanel)
 end
 
 function RenderMiniMapPoints()
-  local geodata = cartographer.GetObjectGeodata(avatar.GetId())
-  if not geodata then
-    Log("Не удалось получить геодату для текущей зоны")
-    for _, wt in pairs(wtPointMini) do
-      wt:Show(false)
-    end
-    return
-  end
+  local avatarId = avatar.GetId()
+  local mapSysName = GetCurrentMapSysName(avatarId)
+  local geodata = cartographer.GetObjectGeodata(avatarId)
 
-  local currentMapName = cartographer.GetZonesMapInfo(unit.GetZonesMapId(avatar.GetId())).sysName
-  RenderPoints(wtMiniMapPanel:GetPlacementPlain(), geodata, currentMapName, wtPointMini, wtMiniMapPanel)
+  DestroyPins(wtPointMini)
+  RenderPoints(wtMiniMapPanel:GetPlacementPlain(), geodata, mapSysName, wtPointMini, wtMiniMapPanel)
+end
+
+function GetPointIndexFromPin(pinName)
+  local name, index = string.match(pinName, "(.+):(%d+)")
+  return name, tonumber(index)
 end
 
 function RenderPoints(mapSize, geodata, mapSysName, container, parent)
+  if not geodata then
+    Log("Не удалось получить геодату для выбранной зоны: " .. mapSysName)
+    return
+  end
+
+  local points = data.Points[mapSysName]
+  if not points then
+    Log("Нет точек для отображения на: " .. mapSysName)
+    return
+  end
+
   local pixelsPerMeterX = mapSize.sizeX / geodata.width
   local pixelsPerMeterY = mapSize.sizeY / geodata.height
 
   for i = 1, #points do
-    if mapSysName == points[i].MAP then
-      local isPinVisible = (Settings.ShowPoints.HERB and points[i].ICON == "HERB") or (Settings.ShowPoints.ORE and points[i].ICON == "GORN")
-      if container[i] then
-        container[i]:Show(isPinVisible)
-      else
-        container[i] = mainForm:CreateWidgetByDesc(pinDesc)
-        container[i]:SetName("wtPoint" .. i)
-        container[i]:Show(isPinVisible)
-        parent:AddChild(container[i])
-        if points[i].ICON then
-          local textureId = common.GetAddonRelatedTexture(points[i].ICON)
-          container[i]:SetBackgroundTexture(textureId)
-        end
-      end
-      local sizeX = 15
-      local sizeY = 20
-      local posX = (points[i].posX - geodata.x) * pixelsPerMeterX
-      local posY = ((geodata.y + geodata.height) - points[i].posY) * pixelsPerMeterY
-      PosXY(container[i], posX - sizeX / 2, sizeX, posY - sizeY, sizeY)
-    else
-      if container[i] then
-        container[i]:Show(false)
-      end
-    end
+    local point = points[i]
+    local isPinVisible = (Settings.ShowPoints.HERB and point.icon == "HERB") or (Settings.ShowPoints.ORE and point.icon == "ORE")
+
+    local pin = mainForm:CreateWidgetByDesc(pinDesc)
+    pin:SetName(mapSysName.. ":" .. i)
+    pin:Show(isPinVisible)
+    pin:SetBackgroundTexture(common.GetAddonRelatedTexture(point.icon))
+
+    parent:AddChild(pin)
+    container[#container + 1] = pin
+
+    local sizeX = 15
+    local sizeY = 20
+    local posX = (point.posX - geodata.x) * pixelsPerMeterX
+    local posY = ((geodata.y + geodata.height) - point.posY) * pixelsPerMeterY
+    PosXY(pin, posX - sizeX / 2, sizeX, posY - sizeY, sizeY)
   end
 end
 
@@ -240,16 +209,17 @@ function CheckMiniMapScale()
     PosXY(wtMiniMapPanel, nil, pl.sizeX, nil, pl.sizeY)
     activeMiniMap.Engine:AddChild(wtMiniMapPanel)
 
-    for i = 1, #points do
-      if wtPointMini[i] then
-        wtPointMini[i]:DestroyWidget()
-        wtPointMini[i] = nil
-      end
-    end
+    DestroyPins(wtPointMini)
     RenderMiniMapPoints()
   end
 end
 
+function DestroyPins(parent)
+  for i = 1, #parent do
+    parent[i]:DestroyWidget()
+    parent[i] = nil
+  end
+end
 --------------------------------------------------------------------------------
 -- EVENT HANDLERS
 --------------------------------------------------------------------------------
@@ -258,8 +228,14 @@ end
 function OnCreate()
   UI:Init()
   LoadMapsDictionary()
-  LoadPoints()
-  MigrateData()
+
+  local migrated = MigrateDataFromOriginalAddon(mapSystemNames)
+  if migrated then
+    data.Points = migrated
+    SaveData()
+  else
+    LoadData()
+  end
 
   CheckMiniMapScale()
 
@@ -269,7 +245,6 @@ function OnCreate()
       spacing = 2,
       gravity = WIDGET_ALIGN_LOW,
       children = {
-        Label { text = "HerbMap", fontSize = 11 },
         HStack {
           spacing = 2,
           gravity = WIDGET_ALIGN_CENTER,
@@ -278,10 +253,11 @@ function OnCreate()
               isChecked = Settings.ShowPoints.HERB,
               onChecked = function(isChecked)
                 Settings.ShowPoints.HERB = isChecked
+                wtPopup:Show(false)
                 RenderMapPoints()
               end
             },
-            Label { text = userMods.ToWString(NameCBtn[1]), style = TextColors['HERB'], fontSize = 12 }
+            Label { text = userMods.ToWString(NameCBtn[1]), style = TextColors.HERB, fontSize = 12 }
           }
         },
         HStack {
@@ -292,28 +268,36 @@ function OnCreate()
               isChecked = Settings.ShowPoints.ORE,
               onChecked = function(isChecked)
                 Settings.ShowPoints.ORE = isChecked
+                wtPopup:Show(false)
                 RenderMapPoints()
               end
             },
-            Label { text = userMods.ToWString(NameCBtn[2]), style = TextColors['GORN'], fontSize = 12 }
+            Label { text = userMods.ToWString(NameCBtn[2]), style = TextColors.ORE, fontSize = 12 }
           }
         },
         Button {
           title = userMods.ToWString(NameBtn[1]),
           sizeX = 150, sizeY = 20,
-          onClicked = ToggleMapOverlayVisibility
+          onClicked = function()
+            wtPopup:Show(false)
+            ToggleMapOverlayVisibility()
+          end
         },
         Button {
           title = userMods.ToWString(NameBtn[2]),
           sizeX = 150, sizeY = 20,
           onClicked = function()
-            DeleteAllPointsOnMap(mapSystemNames[SelectedMapName()])
+            wtPopup:Show(false)
+            DeleteAllPointsOnMap(GetSelectedMapSysName())
           end
         },
         Button {
           title = userMods.ToWString(NameBtn[3]),
           sizeX = 150, sizeY = 20,
-          onClicked = DeleteAllPoints
+          onClicked = function()
+            wtPopup:Show(false)
+            DeleteAllPoints()
+          end
         }
       }
     }
@@ -345,8 +329,8 @@ function OnCreate()
             title = userMods.ToWString(NameTT[1]),
             sizeX = 100, sizeY = 20,
             onClicked = function()
-              DeletePoint(PopupPointIndex)
-              PopupPointIndex = nil
+              DeletePoint(PopupPinName)
+              PopupPinName = nil
               wtPopup:Show(false)
             end
           },
@@ -461,7 +445,7 @@ function OnEventItemTaken(params)
     local sysName = skillInfo and skillInfo.sysName
     if sysName == "Blacksmithing" or sysName == "Weaponsmithing" then
       Log("Это руда")
-      icon = "GORN"
+      icon = "ORE"
       break
     elseif sysName == "Alchemy" then
       Log("Это трава")
@@ -473,25 +457,25 @@ function OnEventItemTaken(params)
     end
   end
 
-  local currentMapName = cartographer.GetZonesMapInfo(unit.GetZonesMapId(avatar.GetId())).sysName
+  local currentMapName = GetCurrentMapSysName()
   local pos = avatar.GetPos()
+  local points = data.Points[currentMapName] or {}
   for i = 1, #points do
-    if points[i].MAP == currentMapName and points[i].ICON == icon and IsPointInCircle(pos, points[i], Settings.IgnoreNewResourcesRadius) then
+    if points[i].icon == icon and IsPointInCircle(pos, points[i], Settings.IgnoreNewResourcesRadius) then
       Log("Такая точка уже есть")
       return
     end
   end
 
   points[#points + 1] = {
-    NAME = item.name,
-    ICON = icon,
-    MAP  = currentMapName,
+    name = item.name,
+    icon = icon,
     posX = pos.posX,
     posY = pos.posY,
-    posZ = pos.posZ
   }
-  Log("Точка записана, всего: " .. #points)
-  SavePoints()
+  data.Points[currentMapName] = points
+  Log("Точка записана, всего " .. #points .. " на " .. currentMapName)
+  SaveData()
   RenderMiniMapPoints()
 end
 
@@ -506,80 +490,55 @@ function ToggleMapOverlayVisibility()
 end
 
 function DeleteAllPoints()
-  for i = 1, #points do
-    if wtPoint[i] then
-      wtPoint[i]:DestroyWidget()
-    end
-    if wtPointMini[i] then
-      wtPointMini[i]:DestroyWidget()
-    end
-  end
-  points = {}
+  DestroyPins(wtPoint)
+  DestroyPins(wtPointMini)
+  data.Points = {}
   Log("Все точки удалены")
-  SavePoints()
+  SaveData()
 end
 
 function DeleteAllPointsOnMap(sysMapName)
-  Log("Сброс точек на карте: " .. sysMapName)
-  local j, size = 1, #points
-  for i = 1, size do
-      if sysMapName == points[i].MAP then
-        if wtPoint[i] then
-          wtPoint[i]:DestroyWidget()
-        end
-        if wtPointMini[i] then
-          wtPointMini[i]:DestroyWidget()
-        end
-        points[i] = nil
-      else
-        if i ~= j then
-          points[j] = points[i]
-          points[i] = nil
-        end
-        j = j + 1
-      end
+  data.Points[sysMapName] = nil
+  DestroyPins(wtPoint)
+  if GetCurrentMapSysName() == sysMapName then
+    DestroyPins(wtPointMini)
   end
-  Log("Удалено точек: " .. (size - #points) .. ", всего: " .. #points)
-  SavePoints()
+  Log("Удалены все точки на карте " .. sysMapName)
+  SaveData()
 end
 
-function DeletePoint(index)
-  if not index then return end
-
+function DeletePoint(pinName)
+  local mapSysName, index = GetPointIndexFromPin(pinName)
+  local points = data.Points[mapSysName]
   local point = points[index]
-  Log("Удаляем точку: " .. userMods.FromWString(point.NAME) .. ", x: " .. point.posX .. ", y: " .. point.posY)
-
-  if wtPoint[index] then
-    wtPoint[index]:DestroyWidget()
-  end
-  if wtPointMini[index] then
-    wtPointMini[index]:DestroyWidget()
-  end
+  Log("Удаляем точку: " .. userMods.FromWString(point.name) .. " " .. point.posX .. "x" .. point.posY)
 
   local lastIndex = #points
   points[index] = points[lastIndex]
   points[lastIndex] = nil
 
-  function MoveWidget(parent)
-    parent[index] = parent[lastIndex]
-    if parent[index] then
-      parent[index]:SetName("wtPoint" .. index)
+  function DeletePin(parent)
+    if parent[index] and parent[index]:GetName() == pinName then
+      parent[index]:DestroyWidget()
+      local last = #parent
+      parent[index] = parent[last]
+      parent[index]:SetName(mapSysName .. ":" .. index)
+      parent[last] = nil
     end
-    parent[lastIndex] = nil
   end
-  MoveWidget(wtPoint)
-  MoveWidget(wtPointMini)
+  DeletePin(wtPoint)
+  DeletePin(wtPointMini)
 
-  SavePoints()
+  SaveData()
 end
 
 -- pin_mouse_over
 function ShowTooltip(params)
   if params.active then
-    local index = tonumber(string.sub(params.sender, 8))
-    local point = points[index]
-    wtTooltipText:SetVal("Text", point.NAME)
-    wtTooltipText:SetClassVal("Style", TextColors[point.ICON] or "tip_white")
+    local mapSysName, index = GetPointIndexFromPin(params.sender)
+    local point = data.Points[mapSysName][index]
+    wtTooltipText:SetVal("Text", point.name)
+    wtTooltipText:SetClassVal("Style", TextColors[point.icon] or "tip_white")
     wtTooltip:Show(true)
     PosTooltip(wtTooltip, params.widget)
   else
@@ -599,10 +558,11 @@ end
 
 -- pin_right_click
 function ShowPopup(params)
-  PopupPointIndex = tonumber(string.sub(params.sender, 8))
-  local point = points[PopupPointIndex]
-  wtPopupText:SetVal("Text", point.NAME)
-  wtPopupText:SetClassVal("Style", TextColors[point.ICON] or "tip_white")
+  PopupPinName = params.sender
+  local mapSysName, index = GetPointIndexFromPin(params.sender)
+  local point = data.Points[mapSysName][index]
+  wtPopupText:SetVal("Text", point.name)
+  wtPopupText:SetClassVal("Style", TextColors[point.icon] or "tip_white")
 
   -- update popup size
   local labelWidth = wtPopupText:GetPlacementPlain().sizeX
