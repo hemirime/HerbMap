@@ -123,7 +123,7 @@ function RenderMapPoints()
   local geodata = FindGeodata(cartographer.GetZonesMapId(mapSysName))
 
   DestroyPins(wtPoint)
-  RenderPoints(wtMainPanel:GetPlacementPlain(), geodata, mapSysName, wtPoint, wtMainPanel)
+  RenderPoints(wtMainPanel:GetPlacementPlain(), geodata, mapSysName, wtPoint, wtMainPanel, 1)
 end
 
 function RenderMiniMapPoints()
@@ -132,7 +132,7 @@ function RenderMiniMapPoints()
   local geodata = cartographer.GetObjectGeodata(avatarId)
 
   DestroyPins(wtPointMini)
-  RenderPoints(wtMiniMapPanel:GetPlacementPlain(), geodata, mapSysName, wtPointMini, wtMiniMapPanel)
+  RenderPoints(wtMiniMapPanel:GetPlacementPlain(), geodata, mapSysName, wtPointMini, wtMiniMapPanel, Settings.MiniMapPinSizeModifier)
 end
 
 function GetPointIndexFromPin(pinName)
@@ -140,7 +140,7 @@ function GetPointIndexFromPin(pinName)
   return name, tonumber(index)
 end
 
-function RenderPoints(mapSize, geodata, mapSysName, container, parent)
+function RenderPoints(mapSize, geodata, mapSysName, container, parent, sizeModifier)
   if not geodata then
     Log("Ќе удалось получить геодату дл€ выбранной зоны: " .. mapSysName)
     return
@@ -167,8 +167,8 @@ function RenderPoints(mapSize, geodata, mapSysName, container, parent)
     parent:AddChild(pin)
     container[#container + 1] = pin
 
-    local sizeX = 15
-    local sizeY = 20
+    local sizeX = 15 * sizeModifier
+    local sizeY = 20 * sizeModifier
     local posX = (point.posX - geodata.x) * pixelsPerMeterX
     local posY = ((geodata.y + geodata.height) - point.posY) * pixelsPerMeterY
     PosXY(pin, posX - sizeX / 2, sizeX, posY - sizeY, sizeY)

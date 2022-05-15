@@ -10,5 +10,7 @@ Global("Settings", {
     ORE = true -- Показывать руду на карте
   },
   -- Радиус до ближайшего объекта аналогичного типа при котором координаты не будут считаться новыми
-  IgnoreNewResourcesRadius = 40
+  IgnoreNewResourcesRadius = 40,
+  -- Множитель размера меток на миникарте
+  MiniMapPinSizeModifier = 0.8
 })
