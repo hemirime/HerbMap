@@ -328,6 +328,7 @@ function OnCreate()
           Button {
             title = userMods.ToWString(NameTT[1]),
             sizeX = 100, sizeY = 20,
+            isInstantClick = true,
             onClicked = function()
               DeletePoint(PopupPinName)
               PopupPinName = nil
@@ -337,6 +338,7 @@ function OnCreate()
           Button {
             title = userMods.ToWString(NameTT[2]),
             sizeX = 100, sizeY = 20,
+            isInstantClick = true,
             onClicked = function()
               wtPopup:Show(false)
             end

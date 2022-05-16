@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<WidgetButton>
+	<Name>PopupButtonTemplate</Name>
+	<Priority>0</Priority>
+	<Placement>
+		<X>
+			<Size>100</Size>
+		</X>
+		<Y>
+			<Size>15</Size>
+		</Y>
+	</Placement>
+	<IgnoreDblClick>true</IgnoreDblClick>
+	<Variants>
+		<Item>
+			<LayerHighlight href="Textures/Highlight.(WidgetLayerTiledTexture).xdb" />
+			<StateNormal>
+				<FormatFileRef href="ButtonFormat.txt" />
+			</StateNormal>
+			<ReactionOnUp>false</ReactionOnUp>
+			<Reaction>on_button_clicked</Reaction>
+		</Item>
+	</Variants>
+	<TextStyle>
+		<Align>ALIGNY_BOTTOM</Align>
+	</TextStyle>
+	<Visible>false</Visible>
+</WidgetButton>

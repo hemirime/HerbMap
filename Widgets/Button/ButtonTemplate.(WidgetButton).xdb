@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<WidgetButton>
+	<Name>ButtonTemplate</Name>
+	<Priority>0</Priority>
+	<Placement>
+		<X>
+			<Size>100</Size>
+		</X>
+		<Y>
+			<Size>15</Size>
+		</Y>
+	</Placement>
+	<IgnoreDblClick>true</IgnoreDblClick>
+	<Variants>
+		<Item>
+			<LayerHighlight href="Textures/Highlight.(WidgetLayerTiledTexture).xdb" />
+			<PushedOffset x="-1" y="1" />
+			<StateNormal>
+				<FormatFileRef href="ButtonFormat.txt" />
+			</StateNormal>
+			<ReactionOnUp>true</ReactionOnUp>
+			<Reaction>on_button_clicked</Reaction>
+		</Item>
+	</Variants>
+	<TextStyle>
+		<Align>ALIGNY_MIDDLE</Align>
+	</TextStyle>
+	<Visible>false</Visible>
+</WidgetButton>

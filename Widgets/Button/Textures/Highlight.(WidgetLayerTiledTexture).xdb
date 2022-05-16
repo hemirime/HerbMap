@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <WidgetLayerTiledTexture>
-	<Color>0xFF9C9C9C</Color>
+	<Color>0x2BFFFFFF</Color>
 	<Grayed>false</Grayed>
-	<BlendEffect>BLEND_EFFECT_ALPHABLND</BlendEffect>
+	<BlendEffect>BLEND_EFFECT_HIGHLIGHT</BlendEffect>
 	<flatPlacement>false</flatPlacement>
 	<lazyLoad>false</lazyLoad>
-	<textureItem href="BarBack.(UISingleTexture).xdb#xpointer(/UISingleTexture)" />
+	<textureItem href="Highlight.(UISingleTexture).xdb" />
 	<Layout>
 		<LeftX>2</LeftX>
 		<MiddleX>36</MiddleX>

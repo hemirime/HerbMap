@@ -11,11 +11,6 @@
 	<disableLODControl>false</disableLODControl>
 	<alphaTex>true</alphaTex>
 	<binaryFileSize>138</binaryFileSize>
-	<binaryFile href="BarBack.(UITexture).bin" />
-	<binaryFileSize2>0</binaryFileSize2>
-	<binaryFile2 href="" />
-	<sourceFile href="BarBack.tga" />
-	<sourceFileCRC>1227433508</sourceFileCRC>
+	<binaryFile href="Highlight.(UITexture).bin" />
 	<wrap>false</wrap>
-	<LocalizationInfo />
 </UITexture>

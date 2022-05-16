@@ -6,7 +6,8 @@ Global("UI", {})
 local stackDesc = mainForm:GetChildChecked("StackTemplate", false):GetWidgetDesc()
 local frameDesc = mainForm:GetChildChecked("FrameTemplate", false):GetWidgetDesc()
 local checkBoxDesc = mainForm:GetChildChecked("CheckboxTemplate", false):GetWidgetDesc()
-local buttonDesc = mainForm:GetChildChecked("bottom", false):GetWidgetDesc()
+local buttonDesc = mainForm:GetChildChecked("ButtonTemplate", false):GetWidgetDesc()
+local popupButtonDesc = mainForm:GetChildChecked("PopupButtonTemplate", false):GetWidgetDesc()
 local labelDesc = mainForm:GetChildChecked("LabelTemplate", false):GetWidgetDesc()
 
 local CheckboxCallbacks = {}
@@ -14,7 +15,7 @@ local ButtonCallbacks = {}
 
 function UI:Init()
   common.RegisterReactionHandler(UI.OnCheckboxClicked, "on_checkbox_clicked")
-  common.RegisterReactionHandler(UI.OnButtonClicked, "ReactionBottom")
+  common.RegisterReactionHandler(UI.OnButtonClicked, "on_button_clicked")
 end
 
 function WidgetID(widget)
@@ -106,10 +107,13 @@ function Checkbox(args)
   return checkbox
 end
 
----@param args table @with fields { title, onClicked, sizeX, sizeY }
+---@param args table @with fields { title, isInstantClick, onClicked, style, fontSize, sizeX, sizeY }
 function Button(args)
-  local button = mainForm:CreateWidgetByDesc(buttonDesc)
-  button:SetVal("Name", args.title)
+  local desc = args.isInstantClick and popupButtonDesc or buttonDesc
+  local button = mainForm:CreateWidgetByDesc(desc)
+  button:SetVal("Text", args.title)
+  button:SetClassVal("Style", args.style or "tip_golden")
+  button:SetClassVal("FontSize", "Size" .. (args.fontSize or 12))
   button:Show(true)
   ButtonCallbacks[WidgetID(button)] = args.onClicked
   SetSize(button, args.sizeX, args.sizeY)
@@ -233,7 +237,7 @@ function UI.OnCheckboxClicked(params)
   end
 end
 
--- ReactionBottom
+-- on_button_clicked
 function UI.OnButtonClicked(params)
   if DnD:IsDragging() then return end
 

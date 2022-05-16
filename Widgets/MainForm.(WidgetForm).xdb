@@ -10,7 +10,8 @@
 		<Item href="StackTemplate.(WidgetPanel).xdb" />
 		<Item href="Label/LabelTemplate.(WidgetTextView).xdb" />
 		<Item href="Checkbox/CheckboxTemplate.(WidgetButton).xdb" />
-		<Item href="Button/bottom.(WidgetButton).xdb" />
+		<Item href="Button/ButtonTemplate.(WidgetButton).xdb" />
+		<Item href="Button/PopupButtonTemplate.(WidgetButton).xdb" />
 	</Children>
 	<Placement>
 		<X>

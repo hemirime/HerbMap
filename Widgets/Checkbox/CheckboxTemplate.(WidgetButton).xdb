@@ -14,40 +14,29 @@
 	<TransparentInput>false</TransparentInput>
 	<PickChildrenOnly>false</PickChildrenOnly>
 	<IgnoreDblClick>true</IgnoreDblClick>
-	<TextTag />
 	<Variants>
 		<Item>
-			<TextFileRef href="" />
-			<PushedOffset x="0" y="0" />
 			<StateNormal>
 				<LayerMain href="Textures/Hollow/Normal/CheckBoxHollowNormal.(WidgetLayerSimpleTexture).xdb" />
-				<FormatFileRef href="" />
 			</StateNormal>
 			<StatePushed>
 				<LayerMain href="Textures/Hollow/Pressed/CheckBoxHollowPressed.(WidgetLayerSimpleTexture).xdb" />
-				<FormatFileRef href="" />
 			</StatePushed>
 			<StateHighlighted>
 				<LayerMain href="Textures/Hollow/Highlighted/CheckBoxHollowHighlighted.(WidgetLayerSimpleTexture).xdb" />
-				<FormatFileRef href="" />
 			</StateHighlighted>
 			<Reaction>on_checkbox_clicked</Reaction>
 			<ReactionOnUp>true</ReactionOnUp>
 		</Item>
 		<Item>
-			<TextFileRef href="" />
-			<PushedOffset x="0" y="0" />
 			<StateNormal>
 				<LayerMain href="Textures/Checked/Normal/CheckBoxCheckedNormal.(WidgetLayerSimpleTexture).xdb" />
-				<FormatFileRef href="" />
 			</StateNormal>
 			<StatePushed>
 				<LayerMain href="Textures/Checked/Pressed/CheckBoxCheckedPressed.(WidgetLayerSimpleTexture).xdb" />
-				<FormatFileRef href="" />
 			</StatePushed>
 			<StateHighlighted>
 				<LayerMain href="Textures/Checked/Highlighted/CheckBoxCheckedHighlighted.(WidgetLayerSimpleTexture).xdb" />
-				<FormatFileRef href="" />
 			</StateHighlighted>
 			<Reaction>on_checkbox_clicked</Reaction>
 			<ReactionOnUp>true</ReactionOnUp>
