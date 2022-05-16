@@ -20,6 +20,9 @@ local wtMiniMapPanel = mainForm:GetChildChecked("HM:MiniMapPanel", false)
 
 local pinDesc = mainForm:GetChildChecked("PinTemplate", false):GetWidgetDesc()
 
+local isDnDRegistered = false
+local wtSettings
+
 local wtTooltip
 local wtTooltipText
 
@@ -180,6 +183,10 @@ function RefreshMapOverlay()
     wtMainPanel:Show(false)
     return
   end
+  if not isDnDRegistered then
+    DnD:Init(wtSettings, wtSettings, true, true)
+    isDnDRegistered = true
+  end
 
   wtMainPanel:Show(ShowMap)
 
@@ -239,7 +246,7 @@ function OnCreate()
 
   CheckMiniMapScale()
 
-  local wtSettings = Frame "HM:Settings" {
+  wtSettings = Frame "HM:Settings" {
     edges = { all = 12 },
     content = VStack {
       spacing = 2,
@@ -304,7 +311,6 @@ function OnCreate()
   }
   wtSettings:SetPriority(3)
   MainMap:AddChild(wtSettings)
-  DnD:Init(wtSettings, wtSettings, true, true)
 
   wtTooltip = Frame "Tooltip" {
     edges = { all = 12 },
