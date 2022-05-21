@@ -1,4 +1,4 @@
-local isDebugEnabled = true
+local isDebugEnabled = false
 
 function Log(message)
   if not isDebugEnabled then return end

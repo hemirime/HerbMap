@@ -12,18 +12,16 @@
     </Item>
   </Forms>
   <ScriptFileRefs>
+    <Item href="config.txt"/>
     <Item href="/Mods/SampleCommon/SampleAddonBase.lua"/>
     <Item href="Scripts/LibDnD.lua"/>
     <Item href="Scripts/UI.lua"/>
     <Item href="Scripts/ScriptLIB.lua"/>
-    <Item href="config.txt"/>
     <Item href="Scripts/Utils.lua"/>
     <Item href="Scripts/HerbMapCompat.lua"/>
-    <Item href="Scripts/herb.lua"/>
+    <Item href="Scripts/Main.lua"/>
   </ScriptFileRefs>
   <textures href="Textures/Textures.(UIRelatedTextures).xdb"/>
   <texts href=""/>
   <visObjects href=""/>
-  <author>Jed(Zeon)</author>
-  <revision>1.2</revision>
 </UIAddon>
