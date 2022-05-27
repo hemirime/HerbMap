@@ -264,7 +264,7 @@ function OnCreate()
                 RenderMapPoints()
               end
             },
-            Label { text = userMods.ToWString(NameCBtn[1]), style = TextColors.HERB, fontSize = 12 }
+            Label { text = userMods.ToWString(L10N.Settings.Herb), style = TextColors.HERB, fontSize = 12 }
           }
         },
         HStack {
@@ -279,11 +279,11 @@ function OnCreate()
                 RenderMapPoints()
               end
             },
-            Label { text = userMods.ToWString(NameCBtn[2]), style = TextColors.ORE, fontSize = 12 }
+            Label { text = userMods.ToWString(L10N.Settings.Ore), style = TextColors.ORE, fontSize = 12 }
           }
         },
         Button {
-          title = userMods.ToWString(NameBtn[1]),
+          title = userMods.ToWString(L10N.Settings.Hide),
           sizeX = 150, sizeY = 20,
           onClicked = function()
             wtPopup:Show(false)
@@ -291,7 +291,7 @@ function OnCreate()
           end
         },
         Button {
-          title = userMods.ToWString(NameBtn[2]),
+          title = userMods.ToWString(L10N.Settings.DeleteMap),
           sizeX = 150, sizeY = 20,
           onClicked = function()
             wtPopup:Show(false)
@@ -299,7 +299,7 @@ function OnCreate()
           end
         },
         Button {
-          title = userMods.ToWString(NameBtn[3]),
+          title = userMods.ToWString(L10N.Settings.DeleteAll),
           sizeX = 150, sizeY = 20,
           onClicked = function()
             wtPopup:Show(false)
@@ -332,7 +332,7 @@ function OnCreate()
         children = {
           wtPopupText,
           Button {
-            title = userMods.ToWString(NameTT[1]),
+            title = userMods.ToWString(L10N.Popup.Remove),
             sizeX = 100, sizeY = 20,
             isInstantClick = true,
             onClicked = function()
@@ -342,7 +342,7 @@ function OnCreate()
             end
           },
           Button {
-            title = userMods.ToWString(NameTT[2]),
+            title = userMods.ToWString(L10N.Popup.Close),
             sizeX = 100, sizeY = 20,
             isInstantClick = true,
             onClicked = function()
