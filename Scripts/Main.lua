@@ -307,6 +307,7 @@ function OnCreate()
             SaveSettings()
             wtPopup:Show(false)
             RenderMapPoints()
+            RenderMiniMapPoints()
           end,
           text = userMods.ToWString(L10N.Settings.Herb),
           style = TextColors.HERB,
@@ -319,6 +320,7 @@ function OnCreate()
             SaveSettings()
             wtPopup:Show(false)
             RenderMapPoints()
+            RenderMiniMapPoints()
           end,
           text = userMods.ToWString(L10N.Settings.Ore),
           style = TextColors.ORE,
