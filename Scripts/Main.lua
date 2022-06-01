@@ -54,10 +54,21 @@ local miniMapInfo = {
 local IsTimerEventRegistered = false
 
 local ShowMap = true
+local AddNewPoints = true
 local mapSystemNames = {}
 --------------------------------------------------------------------------------
 -- HELPERS
 --------------------------------------------------------------------------------
+function CheckboxWithLabel(args)
+  return HStack {
+    spacing = 2,
+    gravity = WIDGET_ALIGN_CENTER,
+    children = {
+      Checkbox(args),
+      Label(args)
+    }
+  }
+end
 
 function GetActiveMiniMap()
   if SquareMiniMap.Widget:IsVisible() then
@@ -252,35 +263,36 @@ function OnCreate()
       spacing = 2,
       gravity = WIDGET_ALIGN_LOW,
       children = {
-        HStack {
-          spacing = 2,
-          gravity = WIDGET_ALIGN_CENTER,
-          children = {
-            Checkbox {
-              isChecked = Settings.ShowPoints.HERB,
-              onChecked = function(isChecked)
-                Settings.ShowPoints.HERB = isChecked
-                wtPopup:Show(false)
-                RenderMapPoints()
-              end
-            },
-            Label { text = userMods.ToWString(L10N.Settings.Herb), style = TextColors.HERB, fontSize = 12 }
-          }
+        CheckboxWithLabel {
+          isChecked = Settings.ShowPoints.HERB,
+          onChecked = function(isChecked)
+            Settings.ShowPoints.HERB = isChecked
+            wtPopup:Show(false)
+            RenderMapPoints()
+          end,
+          text = userMods.ToWString(L10N.Settings.Herb),
+          style = TextColors.HERB,
+          fontSize = 12
         },
-        HStack {
-          spacing = 2,
-          gravity = WIDGET_ALIGN_CENTER,
-          children = {
-            Checkbox {
-              isChecked = Settings.ShowPoints.ORE,
-              onChecked = function(isChecked)
-                Settings.ShowPoints.ORE = isChecked
-                wtPopup:Show(false)
-                RenderMapPoints()
-              end
-            },
-            Label { text = userMods.ToWString(L10N.Settings.Ore), style = TextColors.ORE, fontSize = 12 }
-          }
+        CheckboxWithLabel {
+          isChecked = Settings.ShowPoints.ORE,
+          onChecked = function(isChecked)
+            Settings.ShowPoints.ORE = isChecked
+            wtPopup:Show(false)
+            RenderMapPoints()
+          end,
+          text = userMods.ToWString(L10N.Settings.Ore),
+          style = TextColors.ORE,
+          fontSize = 12
+        },
+        CheckboxWithLabel {
+          isChecked = AddNewPoints,
+          onChecked = function(isChecked)
+            AddNewPoints = isChecked
+          end,
+          text = userMods.ToWString(L10N.Settings.AddPoints),
+          style = "tip_golden",
+          fontSize = 12
         },
         Button {
           title = userMods.ToWString(L10N.Settings.Hide),
@@ -431,6 +443,10 @@ end
 
 -- EVENT_AVATAR_ITEM_TAKEN
 function OnEventItemTaken(params)
+  if not AddNewPoints then
+    Log("Сохранение новых точек отключено")
+    return
+  end
   local itemId = params.itemObject:GetId()
 
   local itemSource = itemLib.GetSource(itemId)
