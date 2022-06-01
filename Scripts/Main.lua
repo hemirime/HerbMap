@@ -51,10 +51,8 @@ local miniMapInfo = {
   MapSize = nil,
 }
 
+local Settings
 local IsTimerEventRegistered = false
-
-local ShowMap = true
-local AddNewPoints = true
 local mapSystemNames = {}
 --------------------------------------------------------------------------------
 -- HELPERS
@@ -111,6 +109,31 @@ function SaveData()
   Log("Данные сохранены, версия: " .. data.Version)
 end
 
+function LoadSettings()
+  local loaded = userMods.GetGlobalConfigSection("Settings")
+  if loaded then
+    Settings = loaded
+    Log("Настройки загружены")
+  else
+    Settings = {
+      ShowPoints = {
+        All = true,
+        Herb = true,
+        Ore = true,
+      },
+      AddPoints = true
+    }
+    Log("Использованы настройки по умолчанию")
+  end
+  LogTable(Settings)
+end
+
+function SaveSettings()
+  userMods.SetGlobalConfigSection("Settings", Settings)
+  Log("Настройки сохранены")
+  LogTable(Settings)
+end
+
 function GetCurrentMapSysName(avatarId)
   return cartographer.GetZonesMapInfo(unit.GetZonesMapId(avatarId or avatar.GetId())).sysName
 end
@@ -146,7 +169,7 @@ function RenderMiniMapPoints()
   local geodata = cartographer.GetObjectGeodata(avatarId)
 
   DestroyPins(wtPointMini)
-  RenderPoints(wtMiniMapPanel:GetPlacementPlain(), geodata, mapSysName, wtPointMini, wtMiniMapPanel, Settings.MiniMapPinSizeModifier)
+  RenderPoints(wtMiniMapPanel:GetPlacementPlain(), geodata, mapSysName, wtPointMini, wtMiniMapPanel, Config.MiniMapPinSizeModifier)
 end
 
 function GetPointIndexFromPin(pinName)
@@ -171,7 +194,7 @@ function RenderPoints(mapSize, geodata, mapSysName, container, parent, sizeModif
 
   for i = 1, #points do
     local point = points[i]
-    local isPinVisible = (Settings.ShowPoints.HERB and point.icon == "HERB") or (Settings.ShowPoints.ORE and point.icon == "ORE")
+    local isPinVisible = (Settings.ShowPoints.Herb and point.icon == "HERB") or (Settings.ShowPoints.Ore and point.icon == "ORE")
 
     local pin = mainForm:CreateWidgetByDesc(pinDesc)
     pin:SetName(mapSysName.. ":" .. i)
@@ -199,7 +222,7 @@ function RefreshMapOverlay()
     isDnDRegistered = true
   end
 
-  wtMainPanel:Show(ShowMap)
+  wtMainPanel:Show(Settings.ShowPoints.All)
 
   local placement = MainMap:GetPlacementPlain()
   wtMainPanel:SetPlacementPlain(placement)
@@ -254,6 +277,7 @@ function OnCreate()
   else
     LoadData()
   end
+  LoadSettings()
 
   CheckMiniMapScale()
 
@@ -264,9 +288,10 @@ function OnCreate()
       gravity = WIDGET_ALIGN_LOW,
       children = {
         CheckboxWithLabel {
-          isChecked = Settings.ShowPoints.HERB,
+          isChecked = Settings.ShowPoints.Herb,
           onChecked = function(isChecked)
-            Settings.ShowPoints.HERB = isChecked
+            Settings.ShowPoints.Herb = isChecked
+            SaveSettings()
             wtPopup:Show(false)
             RenderMapPoints()
           end,
@@ -275,9 +300,10 @@ function OnCreate()
           fontSize = 12
         },
         CheckboxWithLabel {
-          isChecked = Settings.ShowPoints.ORE,
+          isChecked = Settings.ShowPoints.Ore,
           onChecked = function(isChecked)
-            Settings.ShowPoints.ORE = isChecked
+            Settings.ShowPoints.Ore = isChecked
+            SaveSettings()
             wtPopup:Show(false)
             RenderMapPoints()
           end,
@@ -286,9 +312,10 @@ function OnCreate()
           fontSize = 12
         },
         CheckboxWithLabel {
-          isChecked = AddNewPoints,
+          isChecked = Settings.AddPoints,
           onChecked = function(isChecked)
-            AddNewPoints = isChecked
+            Settings.AddPoints = isChecked
+            SaveSettings()
           end,
           text = userMods.ToWString(L10N.Settings.AddPoints),
           style = "tip_golden",
@@ -298,8 +325,11 @@ function OnCreate()
           title = userMods.ToWString(L10N.Settings.Hide),
           sizeX = 150, sizeY = 20,
           onClicked = function()
+            Settings.ShowPoints.All = not Settings.ShowPoints.All
+            SaveSettings()
             wtPopup:Show(false)
-            ToggleMapOverlayVisibility()
+            Log("Скрыть/Показать точки на карте")
+            wtMainPanel:Show(Settings.ShowPoints.All)
           end
         },
         Button {
@@ -443,8 +473,8 @@ end
 
 -- EVENT_AVATAR_ITEM_TAKEN
 function OnEventItemTaken(params)
-  if not AddNewPoints then
-    Log("Сохранение новых точек отключено")
+  if not Settings.AddPoints then
+    Log("Добавление точек отключено")
     return
   end
   local itemId = params.itemObject:GetId()
@@ -485,7 +515,7 @@ function OnEventItemTaken(params)
   local pos = avatar.GetPos()
   local points = data.Points[currentMapName] or {}
   for i = 1, #points do
-    if points[i].icon == icon and IsPointInCircle(pos, points[i], Settings.IgnoreNewResourcesRadius) then
+    if points[i].icon == icon and IsPointInCircle(pos, points[i], Config.IgnoreNewResourcesRadius) then
       Log("Такая точка уже есть")
       return
     end
@@ -506,13 +536,6 @@ end
 --------------------------------------------------------------------------------
 -- REACTION HANDLERS
 --------------------------------------------------------------------------------
-
-function ToggleMapOverlayVisibility()
-  Log("Скрыть/Показать точки на карте")
-  ShowMap = not ShowMap
-  wtMainPanel:Show(ShowMap)
-end
-
 function DeleteAllPoints()
   DestroyPins(wtPoint)
   DestroyPins(wtPointMini)
