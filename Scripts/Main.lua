@@ -21,6 +21,7 @@ local wtMiniMapPanel = mainForm:GetChildChecked("HM:MiniMapPanel", false)
 local pinDesc = mainForm:GetChildChecked("PinTemplate", false):GetWidgetDesc()
 
 local isDnDRegistered = false
+local wtToggleVisibilityButton
 local wtSettings
 
 local wtTooltip
@@ -281,6 +282,18 @@ function OnCreate()
 
   CheckMiniMapScale()
 
+  wtToggleVisibilityButton = Button {
+    title = userMods.ToWString(Settings.ShowPoints.All and L10N.Settings.HideAll or L10N.Settings.ShowAll),
+    sizeX = 150, sizeY = 20,
+    onClicked = function()
+      Settings.ShowPoints.All = not Settings.ShowPoints.All
+      SaveSettings()
+      wtPopup:Show(false)
+      wtToggleVisibilityButton:SetVal("Text", userMods.ToWString(Settings.ShowPoints.All and L10N.Settings.HideAll or L10N.Settings.ShowAll))
+      wtMainPanel:Show(Settings.ShowPoints.All)
+    end
+  }
+
   wtSettings = Frame "HM:Settings" {
     edges = { all = 12 },
     content = VStack {
@@ -321,17 +334,7 @@ function OnCreate()
           style = "tip_golden",
           fontSize = 12
         },
-        Button {
-          title = userMods.ToWString(L10N.Settings.Hide),
-          sizeX = 150, sizeY = 20,
-          onClicked = function()
-            Settings.ShowPoints.All = not Settings.ShowPoints.All
-            SaveSettings()
-            wtPopup:Show(false)
-            Log("Скрыть/Показать точки на карте")
-            wtMainPanel:Show(Settings.ShowPoints.All)
-          end
-        },
+        wtToggleVisibilityButton,
         Button {
           title = userMods.ToWString(L10N.Settings.DeleteMap),
           sizeX = 150, sizeY = 20,
