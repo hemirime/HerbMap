@@ -200,7 +200,7 @@ function RenderPoints(mapSize, geodata, mapSysName, container, parent, sizeModif
     local pin = mainForm:CreateWidgetByDesc(pinDesc)
     pin:SetName(mapSysName.. ":" .. i)
     pin:Show(isPinVisible)
-    pin:SetBackgroundTexture(common.GetAddonRelatedTexture(point.icon))
+    pin:SetBackgroundTexture(GetAddonTexture("PinTextures", point.icon))
 
     parent:AddChild(pin)
     container[#container + 1] = pin

@@ -21,3 +21,28 @@ function LogTable(table, level)
     end
   end
 end
+
+--------------------------------------------------------------------------------
+--- Texture caches
+--------------------------------------------------------------------------------
+local _textureGroups = {}
+local _textureCache = {}
+
+--- Получить текстуру sysName из текстурной группы аддона sysGroup (группа должна существовать)
+function GetAddonTexture(sysGroup, sysName)
+  local group = _textureGroups[sysGroup]
+  if not group then
+    group = common.GetAddonRelatedTextureGroup(sysGroup)
+    _textureGroups[sysGroup] = group
+    _textureCache[sysGroup] = {}
+  end
+  local result = _textureCache[sysGroup][sysName]
+  if result == nil then
+    result = group:HasTexture(sysName) and group:GetTexture(sysName)
+    _textureCache[sysGroup][sysName] = result
+  end
+  if result == false then
+    assert(false, "Non-existent texture requested: " .. tostring(sysName))
+  end
+  return result
+end

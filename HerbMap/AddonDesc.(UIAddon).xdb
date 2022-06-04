@@ -22,7 +22,10 @@
     <Item href="Scripts/HerbMapCompat.lua"/>
     <Item href="Scripts/Main.lua"/>
   </ScriptFileRefs>
-  <textures href="Textures/Textures.(UIRelatedTextures).xdb"/>
-  <texts href=""/>
-  <visObjects href=""/>
+  <texturesGroups>
+    <Item>
+      <groupName>PinTextures</groupName>
+      <textures href="Textures/Textures.(UIRelatedTextures).xdb" />
+    </Item>
+  </texturesGroups>
 </UIAddon>
