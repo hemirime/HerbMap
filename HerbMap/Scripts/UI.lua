@@ -107,13 +107,14 @@ function Checkbox(args)
   return checkbox
 end
 
----@param args table @with fields { title, isInstantClick, onClicked, style, fontSize, sizeX, sizeY }
+---@param args table @with fields { title, isInstantClick, onClicked, style, fontSize, align, sizeX, sizeY }
 function Button(args)
   local desc = args.isInstantClick and popupButtonDesc or buttonDesc
   local button = mainForm:CreateWidgetByDesc(desc)
   button:SetVal("Text", args.title)
   button:SetClassVal("Style", args.style or "tip_golden")
   button:SetClassVal("FontSize", "Size" .. (args.fontSize or 12))
+  button:SetClassVal("Align", "align" .. (args.align or "Left"))
   button:Show(true)
   ButtonCallbacks[WidgetID(button)] = args.onClicked
   SetSize(button, args.sizeX, args.sizeY)

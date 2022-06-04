@@ -32,6 +32,8 @@ local wtPopupText
 local PopupMinWidth
 local PopupPinName
 
+local wtConfirmation
+
 local TextColors = {
   ORE = "tip_blue",
   HERB = "tip_green"
@@ -139,9 +141,9 @@ function GetCurrentMapSysName(avatarId)
   return cartographer.GetZonesMapInfo(unit.GetZonesMapId(avatarId or avatar.GetId())).sysName
 end
 
-function GetSelectedMapSysName()
+function GetSelectedMapNames()
   local localizedName = userMods.FromWString(common.ExtractWStringFromValuedText(MainMapLabel:GetValuedText()))
-  return mapSystemNames[localizedName]
+  return localizedName, mapSystemNames[localizedName]
 end
 
 function RenderMapPoints()
@@ -157,7 +159,7 @@ function RenderMapPoints()
     end
   end
 
-  local mapSysName = GetSelectedMapSysName()
+  local _, mapSysName = GetSelectedMapNames()
   local geodata = FindGeodata(cartographer.GetZonesMapId(mapSysName))
 
   DestroyPins(wtPoint)
@@ -301,6 +303,8 @@ function OnCreate()
       gravity = WIDGET_ALIGN_LOW,
       children = {
         CheckboxWithLabel {
+          text = userMods.ToWString(L10N.Settings.Herb),
+          style = TextColors.HERB, fontSize = 12,
           isChecked = Settings.ShowPoints.Herb,
           onChecked = function(isChecked)
             Settings.ShowPoints.Herb = isChecked
@@ -309,11 +313,10 @@ function OnCreate()
             RenderMapPoints()
             RenderMiniMapPoints()
           end,
-          text = userMods.ToWString(L10N.Settings.Herb),
-          style = TextColors.HERB,
-          fontSize = 12
         },
         CheckboxWithLabel {
+          text = userMods.ToWString(L10N.Settings.Ore),
+          style = TextColors.ORE, fontSize = 12,
           isChecked = Settings.ShowPoints.Ore,
           onChecked = function(isChecked)
             Settings.ShowPoints.Ore = isChecked
@@ -322,9 +325,6 @@ function OnCreate()
             RenderMapPoints()
             RenderMiniMapPoints()
           end,
-          text = userMods.ToWString(L10N.Settings.Ore),
-          style = TextColors.ORE,
-          fontSize = 12
         },
         CheckboxWithLabel {
           isChecked = Settings.AddPoints,
@@ -342,7 +342,10 @@ function OnCreate()
           sizeX = 150, sizeY = 20,
           onClicked = function()
             wtPopup:Show(false)
-            DeleteAllPointsOnMap(GetSelectedMapSysName())
+            local mapName, mapSysName = GetSelectedMapNames()
+            ShowConfirmation(string.format(L10N.Confirmation.RemoveOnMap, mapName), L10N.Action.Remove, function()
+              DeleteAllPointsOnMap(mapSysName)
+            end)
           end
         },
         Button {
@@ -350,7 +353,7 @@ function OnCreate()
           sizeX = 150, sizeY = 20,
           onClicked = function()
             wtPopup:Show(false)
-            DeleteAllPoints()
+            ShowConfirmation(L10N.Confirmation.RemoveAll, L10N.Action.RemoveAll, DeleteAllPoints)
           end
         }
       }
@@ -379,7 +382,7 @@ function OnCreate()
         children = {
           wtPopupText,
           Button {
-            title = userMods.ToWString(L10N.Popup.Remove),
+            title = userMods.ToWString(L10N.Action.RemovePoint),
             sizeX = 100, sizeY = 20,
             isInstantClick = true,
             onClicked = function()
@@ -389,7 +392,7 @@ function OnCreate()
             end
           },
           Button {
-            title = userMods.ToWString(L10N.Popup.Close),
+            title = userMods.ToWString(L10N.Action.Close),
             sizeX = 100, sizeY = 20,
             isInstantClick = true,
             onClicked = function()
@@ -403,6 +406,12 @@ function OnCreate()
     end
   }
   wtPopup:Show(false)
+
+  wtConfirmation = CreateConfirmationAlert()
+  wtConfirmation:SetPriority(9999)
+  MainMap:AddChild(wtConfirmation)
+  SetPos(wtConfirmation,nil, nil, WIDGET_ALIGN_CENTER, WIDGET_ALIGN_CENTER)
+  DnD:Init(wtConfirmation, wtConfirmation, false, true)
 
   local mapRoot = stateMainForm:GetChildChecked("Map", false)
   mapRoot:GetChildChecked("MainPanel", false):SetOnShowNotification(true)
@@ -443,6 +452,7 @@ function OnWidgetShow(params)
     RefreshMapOverlay()
     wtTooltip:Show(false)
     wtPopup:Show(false)
+    wtConfirmation:Show(false)
   end
   if IsMiniMap() then
     CheckMiniMapScale()

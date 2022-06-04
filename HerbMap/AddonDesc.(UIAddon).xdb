@@ -18,6 +18,7 @@
     <Item href="Scripts/LibDnD.lua"/>
     <Item href="Scripts/ScriptLIB.lua"/>
     <Item href="Scripts/UI.lua"/>
+    <Item href="Scripts/Confirmation.lua"/>
     <Item href="Scripts/Utils.lua"/>
     <Item href="Scripts/HerbMapCompat.lua"/>
     <Item href="Scripts/Main.lua"/>
